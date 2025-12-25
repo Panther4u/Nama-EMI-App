@@ -153,6 +153,7 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ isOpen, onClose }) => {
       emiAmount: '',
       tenure: '',
       nextDueDate: '',
+      serverIp: '',
     });
     onClose();
   }
@@ -293,16 +294,15 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ isOpen, onClose }) => {
             </h3>
             <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="serverIp">Server IP (For Download) *</Label>
+                <Label htmlFor="serverIp">Server IP (Optional / Dev Only)</Label>
                 <Input
                   id="serverIp"
                   name="serverIp"
                   value={formData.serverIp}
                   onChange={handleChange}
-                  placeholder="192.168.1.10"
-                  required
+                  placeholder="Leave empty for Live Server"
                 />
-                <p className="text-[10px] text-muted-foreground">Enter your computer's Local IP for phone to download APK.</p>
+                <p className="text-[10px] text-muted-foreground">Local IP only needed for development testing.</p>
               </div>
               <div className="col-span-2 space-y-2">
                 <DeviceModelSelector

@@ -33,9 +33,9 @@ const generateQRData = (device: Partial<Device> & { serverIp?: string }): string
     address: device.address,
   };
 
-  // Use provided IP or default to a placeholder if missing
-  const host = device.serverIp || 'nama-emi-app.com';
-  const downloadUrl = `http://${host}:5000/downloads/app.apk`;
+  // Use production URL by default, fallback to provided IP for local testing
+  const host = device.serverIp ? `http://${device.serverIp}:5000` : 'https://nama-emi-app.onrender.com';
+  const downloadUrl = `${host}/downloads/app.apk`;
 
   return JSON.stringify({
     "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": "com.nama.emi.app/com.nama.emi.app.AdminReceiver",
