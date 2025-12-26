@@ -40,7 +40,6 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ isOpen, onClose }) => {
     emiAmount: '',
     tenure: '',
     nextDueDate: '',
-    serverIp: '',
   });
   const [showQR, setShowQR] = useState(false);
   const [createdDevice, setCreatedDevice] = useState<any>(null);
@@ -74,10 +73,7 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ isOpen, onClose }) => {
     }
   }, [formData.imei1]);
 
-  useEffect(() => {
-    // Auto-detect IP or use localhost default
-    setFormData(prev => ({ ...prev, serverIp: window.location.hostname }));
-  }, []);
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -95,7 +91,7 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ isOpen, onClose }) => {
       imei1: formData.imei1,
       imei2: formData.imei2,
       deviceModel: formData.deviceModel,
-      serverIp: formData.serverIp, // Pass IP for QR code
+      // serverIp: formData.serverIp, // Removed: Auto-handled by logic
       isLocked: false,
       location: {
         lat: 12.9716 + (Math.random() - 0.5) * 0.1,
@@ -153,7 +149,6 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ isOpen, onClose }) => {
       emiAmount: '',
       tenure: '',
       nextDueDate: '',
-      serverIp: '',
     });
     onClose();
   }
@@ -293,17 +288,7 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ isOpen, onClose }) => {
               Device Details
             </h3>
             <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="serverIp">Server IP (Optional / Dev Only)</Label>
-                <Input
-                  id="serverIp"
-                  name="serverIp"
-                  value={formData.serverIp}
-                  onChange={handleChange}
-                  placeholder="Leave empty for Live Server"
-                />
-                <p className="text-[10px] text-muted-foreground">Local IP only needed for development testing.</p>
-              </div>
+
               <div className="col-span-2 space-y-2">
                 <DeviceModelSelector
                   value={formData.deviceModel}

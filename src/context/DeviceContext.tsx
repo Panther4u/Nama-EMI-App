@@ -42,7 +42,7 @@ const generateQRData = (device: Partial<Device> & { serverIp?: string }): string
 
   return JSON.stringify({
     "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": "com.nama.emi.app/com.nama.emi.app.AdminReceiver",
-    "android.app.extra.PROVISIONING_DEVICE_ADMIN_SIGNATURE_CHECKSUM": "AgEwID...<placeholder_checksum>...",
+    "android.app.extra.PROVISIONING_DEVICE_ADMIN_SIGNATURE_CHECKSUM": "TO9WQFAq5nWMWeBHGEv1BpMIkN7X8RUkxCbUxI7xxcU",
     "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION": downloadUrl,
     "android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE": adminExtras
   });
