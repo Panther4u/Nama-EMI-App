@@ -15,7 +15,7 @@ app.use(express.static('public')); // Serve files from 'public' folder
 app.use(express.static('dist')); // Serve Vite build output
 
 // Handle SPA routing - send all non-API requests to index.html
-app.get('*', (req, res, next) => {
+app.get(/(.*)/, (req, res, next) => {
     if (req.url.startsWith('/api')) return next();
     res.sendFile(require('path').resolve(__dirname, '..', 'dist', 'index.html'));
 });
