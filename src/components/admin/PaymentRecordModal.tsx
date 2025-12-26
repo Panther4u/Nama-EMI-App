@@ -69,7 +69,7 @@ const PaymentRecordModal: React.FC<PaymentRecordModalProps> = ({ device, onClose
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.transactionId.trim()) {
       toast({
         title: 'Error',
@@ -102,7 +102,7 @@ const PaymentRecordModal: React.FC<PaymentRecordModalProps> = ({ device, onClose
 
   return (
     <Dialog open={!!device} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="w-full h-full max-w-none md:max-w-2xl md:h-auto md:max-h-[90vh] p-4 md:p-6 md:rounded-xl overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <IndianRupee className="w-5 h-5" />

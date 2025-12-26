@@ -271,7 +271,7 @@ const AdminDashboard: React.FC = () => {
 
       {selectedDeviceId && (
         <DeviceDetailModal
-          device={getDeviceById(selectedDeviceId)!}
+          deviceId={selectedDeviceId}
           onClose={() => setSelectedDeviceId(null)}
         />
       )}
