@@ -14,6 +14,12 @@ else
     echo "✅ Keystore found."
 fi
 
+# 0.5 Build Frontend & Sync
+echo "🏗️ Building React Frontend..."
+npm run build
+echo "🔄 Syncing with Capacitor..."
+npx cap sync android
+
 # 1. Build Release APK
 echo "📦 Building Release APK..."
 cd android
