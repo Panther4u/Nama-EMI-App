@@ -15,8 +15,6 @@
     "@capacitor/android": "6.2.1",
     "@capacitor/cli": "6.2.1",
     "@capacitor/core": "6.2.1",
-    "@capacitor/device": "^6.0.2",
-    "@capacitor/network": "^6.0.2",
     "@capacitor/preferences": "^6.0.3",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.11",
@@ -71,6 +69,8 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@capacitor/device": "^8.0.0",
+    "@capacitor/network": "^8.0.0",
     "@eslint/js": "^9.32.0",
     "@tailwindcss/typography": "^0.5.16",
     "@types/node": "^22.16.5",
