@@ -13,7 +13,7 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/mobile
 
 const compression = require('compression'); // Optimization: Gzip
 
-// Priority 1: Explicit APK Download Route (Must be before static/SPA)
+// Priority 1: Explicit APK Download Routes (Must be before static/SPA)
 app.get('/downloads/app.apk', (req, res) => {
     const apkPath = path.join(__dirname, 'public', 'downloads', 'app.apk');
     console.log('Checking APK path:', apkPath);
@@ -30,6 +30,24 @@ app.get('/downloads/app.apk', (req, res) => {
         res.status(404).send('APK File Not Found on Server');
     }
 });
+
+app.get('/downloads/nama-emi.apk', (req, res) => {
+    const apkPath = path.join(__dirname, 'public', 'downloads', 'nama-emi.apk');
+    console.log('Checking Nama EMI APK path:', apkPath);
+
+    if (fs.existsSync(apkPath)) {
+        console.log('✅ Serving Nama EMI APK file');
+        res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+        res.setHeader('Content-Disposition', 'attachment; filename="nama-emi.apk"');
+        const stat = fs.statSync(apkPath);
+        res.setHeader('Content-Length', stat.size);
+        res.download(apkPath, 'nama-emi.apk');
+    } else {
+        console.error('❌ Nama EMI APK FILE MISSING at:', apkPath);
+        res.status(404).send('APK File Not Found on Server');
+    }
+});
+
 
 // Priority 2: Health Check
 app.get('/api/health', (req, res) => {
