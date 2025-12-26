@@ -113,6 +113,34 @@ const MobileClient: React.FC = () => {
     }
   }, [device]);
 
+  // Enforce Kiosk/Lock Task Mode when Locked
+  useEffect(() => {
+    const manageLockState = async () => {
+      if (!device) return;
+
+      try {
+        const { registerPlugin } = await import('@capacitor/core');
+        const WipeDevice = registerPlugin('WipeDevice');
+
+        if (device.isLocked) {
+          console.log("Device LOCKED: Enforcing Kiosk Mode");
+          // @ts-ignore
+          await WipeDevice.enforceDeviceRestrictions(); // Ensure whitelist
+          // @ts-ignore
+          await WipeDevice.startLockTaskMode(); // Pin screen
+        } else {
+          console.log("Device ACTIVE: Releasing Kiosk Mode");
+          // @ts-ignore
+          await WipeDevice.stopLockTaskMode(); // Unpin screen
+        }
+      } catch (e) {
+        console.error("Lock State Management Failed:", e);
+      }
+    };
+
+    manageLockState();
+  }, [device?.isLocked]);
+
   // Location Tracking Simulation
   useEffect(() => {
     if (device?.isTracking) {

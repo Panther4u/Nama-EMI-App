@@ -226,6 +226,27 @@ public class WipeDevicePlugin extends Plugin {
     }
 
     @PluginMethod
+    public void startLockTaskMode(PluginCall call) {
+        // Must be called from the Activity context to pin the screen
+        if (getActivity() != null) {
+            getActivity().startLockTask();
+            call.resolve();
+        } else {
+            call.reject("Activity not found");
+        }
+    }
+
+    @PluginMethod
+    public void stopLockTaskMode(PluginCall call) {
+        if (getActivity() != null) {
+            getActivity().stopLockTask();
+            call.resolve();
+        } else {
+            call.reject("Activity not found");
+        }
+    }
+
+    @PluginMethod
     public void checkTamperAttempts(PluginCall call) {
         Context context = getContext();
         DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
