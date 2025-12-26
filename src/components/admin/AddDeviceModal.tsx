@@ -123,18 +123,20 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ isOpen, onClose }) => {
   };
 
   if (showQR && createdDevice) {
-    // Checksum for current APK (NF9iLOnjAVTlZMXc+W5YnxiCJTDAyC1jokevvYCV0ks= -> URL Safe)
-    const apkChecksum = "NF9iLOnjAVTlZMXc-W5YnxiCJTDAyC1jokevvYCV0ks";
+    // Checksum for current APK (SsRDEvbLTEDXHdcXRgmRuxDRxvSm3UejbhCOrwXZ+nU= -> URL Safe)
+    const apkChecksum = "SsRDEvbLTEDXHdcXRgmRuxDRxvSm3UejbhCOrwXZ-nU";
 
     const qrData = JSON.stringify({
       "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": "com.nama.emi.app/.AdminReceiver",
       "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION": `${window.location.origin}/downloads/nama-emi.apk`,
       "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_CHECKSUM": apkChecksum,
       "android.app.extra.PROVISIONING_SKIP_ENCRYPTION": true,
-      "deviceId": createdDevice.id,
-      "serverUrl": window.location.origin,
-      "customerName": createdDevice.customerName,
-      "deviceModel": createdDevice.deviceModel,
+      "android.app.extra.PROVISIONING_LEAVE_ALL_SYSTEM_APPS_ENABLED": true,
+      "android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE": {
+        "deviceId": createdDevice.id,
+        "serverUrl": window.location.origin,
+        "customerName": createdDevice.customerName
+      }
     });
 
     return (

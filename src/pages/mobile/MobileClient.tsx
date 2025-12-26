@@ -44,21 +44,25 @@ const MobileClient: React.FC = () => {
 
   // Auto-login from Provisioning Storage
   useEffect(() => {
-    const checkStoredIdentity = async () => {
-      if (deviceId) return; // Already have ID from URL
+    const timer = setTimeout(() => {
+      const checkStoredIdentity = async () => {
+        if (deviceId) return; // Already have ID from URL
 
-      try {
-        const { value: storedId } = await Preferences.get({ key: 'deviceId' });
-        if (storedId) {
-          console.log('Found provisioned Device ID:', storedId);
-          navigate(`/mobile/${storedId}`);
+        try {
+          const { value: storedId } = await Preferences.get({ key: 'deviceId' });
+          if (storedId) {
+            console.log('Found provisioned Device ID:', storedId);
+            navigate(`/mobile/${storedId}`);
+          }
+        } catch (err) {
+          console.error('Error reading preferences:', err);
         }
-      } catch (err) {
-        console.error('Error reading preferences:', err);
-      }
-    };
+      };
 
-    checkStoredIdentity();
+      checkStoredIdentity();
+    }, 3000); // Wait 3s for system to stabilize
+
+    return () => clearTimeout(timer);
   }, [deviceId, navigate]);
 
   useEffect(() => {
