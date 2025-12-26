@@ -31,6 +31,7 @@ import {
   IndianRupee,
   Trash2,
   AlertTriangle,
+  X,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -69,336 +70,347 @@ const DeviceDetailModal: React.FC<DeviceDetailModalProps> = ({ deviceId, onClose
 
   return (
     <Dialog open={!!deviceId} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="w-full h-full max-w-none md:max-w-3xl md:h-auto md:max-h-[90vh] p-0 gap-0 md:rounded-xl bg-card border-border overflow-hidden flex flex-col">
+        {/* Sticky Header */}
+        <DialogHeader className="p-4 border-b border-border bg-card sticky top-0 z-20 shrink-0">
           <div className="flex items-center justify-between">
-            <DialogTitle className="flex items-center gap-2">
-              <Smartphone className="w-5 h-5" />
+            <DialogTitle className="flex items-center gap-2 text-foreground">
+              <Smartphone className="w-5 h-5 text-primary" />
               Device Details
             </DialogTitle>
-            <Badge variant={device.isLocked ? 'destructive' : 'default'} className="ml-2">
-              {device.isLocked ? 'LOCKED' : 'ACTIVE'}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant={device.isLocked ? 'destructive' : 'default'}>
+                {device.isLocked ? 'LOCKED' : 'ACTIVE'}
+              </Badge>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                className="md:hidden text-muted-foreground hover:bg-muted"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
           </div>
         </DialogHeader>
 
-        <Tabs defaultValue="info" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="info">Info</TabsTrigger>
-            <TabsTrigger value="controls">Controls</TabsTrigger>
-            <TabsTrigger value="location">Location</TabsTrigger>
-            <TabsTrigger value="qr">QR Code</TabsTrigger>
-          </TabsList>
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6">
+          <Tabs defaultValue="info" className="w-full">
+            <TabsList className="w-full grid grid-cols-4 mb-6 bg-muted/50 p-1 rounded-xl">
+              <TabsTrigger value="info" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Info</TabsTrigger>
+              <TabsTrigger value="controls" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Cntrl</TabsTrigger>
+              <TabsTrigger value="location" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Loc</TabsTrigger>
+              <TabsTrigger value="qr" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">QR</TabsTrigger>
+            </TabsList>
 
-          {/* Info Tab */}
-          <TabsContent value="info" className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Customer Info */}
-              <div className="space-y-1">
-                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-3">
-                  Customer Information
-                </h3>
-                <InfoRow icon={User} label="Customer Name" value={device.customerName} />
-                <InfoRow icon={Smartphone} label="Mobile Number" value={device.mobileNo} />
-                <InfoRow label="Aadhar Number" value={device.aadharNo} />
-                <InfoRow icon={MapPin} label="Address" value={device.address} />
-              </div>
-
-              {/* Device Info */}
-              <div className="space-y-1">
-                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-3">
-                  Device Information
-                </h3>
-                <InfoRow icon={Smartphone} label="Device Model" value={device.deviceModel} />
-                <InfoRow label="IMEI 1" value={device.imei1} />
-                <InfoRow label="IMEI 2" value={device.imei2} />
-                <InfoRow icon={Calendar} label="Registered On" value={new Date(device.registeredAt).toLocaleDateString('en-IN')} />
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Live Telemetry */}
-            {device.telemetry && (
-              <div className="space-y-1">
-                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
-                  <Signal className="w-4 h-4" /> Live Device Status
-                  <span className="text-[10px] normal-case bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
-                    Last seen: {device.telemetry?.lastSeen ? new Date(device.telemetry.lastSeen).toLocaleTimeString() : 'Never'}
-                  </span>
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="p-3 bg-muted/50 rounded-lg">
-                    <p className="text-xs text-muted-foreground">Battery</p>
-                    <p className="font-semibold flex items-center gap-2">
-                      <div className={`w-2 h-4 rounded-sm border border-current flex items-end p-0.5 ${(device.telemetry?.batteryLevel ?? 0) < 20 ? 'text-red-500' : 'text-green-600'}`}>
-                        <div className="w-full bg-current rounded-[1px]" style={{ height: `${device.telemetry?.batteryLevel ?? 0}%` }} />
-                      </div>
-                      {device.telemetry?.batteryLevel ?? '--'}%
-                    </p>
+            {/* Info Tab */}
+            <TabsContent value="info" className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-300">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Customer Info */}
+                <div className="space-y-3 bg-muted/30 p-4 rounded-xl border border-border">
+                  <h3 className="text-sm font-semibold text-primary uppercase tracking-wide flex items-center gap-2">
+                    <User className="w-4 h-4" /> Customer Information
+                  </h3>
+                  <div className="space-y-2">
+                    <InfoRow icon={User} label="Customer Name" value={device.customerName} />
+                    <InfoRow icon={Smartphone} label="Mobile Number" value={device.mobileNo} />
+                    <InfoRow icon={CreditCard} label="Aadhar Number" value={device.aadharNo} />
+                    <InfoRow icon={MapPin} label="Address" value={device.address} />
                   </div>
-                  <div className="p-3 bg-muted/50 rounded-lg">
-                    <p className="text-xs text-muted-foreground">Network</p>
-                    <p className="font-semibold capitalize flex items-center gap-2">
-                      {device.telemetry?.networkType === 'wifi' ? <Wifi className="w-4 h-4 text-blue-500" /> : <Signal className="w-4 h-4 text-green-500" />}
-                      {device.telemetry?.networkType ?? 'Unknown'}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-muted/50 rounded-lg">
-                    <p className="text-xs text-muted-foreground">SIM Provider</p>
-                    <p className="font-semibold flex items-center gap-2">
-                      <Smartphone className="w-4 h-4" />
-                      {device.telemetry?.simCarrier ?? 'Unknown'}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-muted/50 rounded-lg">
-                    <p className="text-xs text-muted-foreground">Software</p>
-                    <p className="font-semibold">Android {device.telemetry?.androidVersion ? device.telemetry.androidVersion.split(' ')[0] : 'Unknown'}</p>
+                </div>
+
+                {/* Device Info */}
+                <div className="space-y-3 bg-muted/30 p-4 rounded-xl border border-border">
+                  <h3 className="text-sm font-semibold text-primary uppercase tracking-wide flex items-center gap-2">
+                    <Smartphone className="w-4 h-4" /> Device Information
+                  </h3>
+                  <div className="space-y-2">
+                    <InfoRow label="Device Model" value={device.deviceModel} />
+                    <InfoRow label="IMEI 1" value={device.imei1} />
+                    <InfoRow label="IMEI 2" value={device.imei2} />
+                    <InfoRow icon={Calendar} label="Registered On" value={new Date(device.registeredAt).toLocaleDateString('en-IN')} />
                   </div>
                 </div>
               </div>
-            )}
 
-            <Separator />
-
-            {/* EMI Details */}
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-3">
-                EMI Details
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="p-3 bg-muted/50 rounded-lg">
-                  <p className="text-xs text-muted-foreground">Finance Company</p>
-                  <p className="font-semibold">{device.emiDetails.financeName}</p>
-                </div>
-                <div className="p-3 bg-muted/50 rounded-lg">
-                  <p className="text-xs text-muted-foreground">Total Amount</p>
-                  <p className="font-semibold flex items-center">
-                    <IndianRupee className="w-3 h-3" />
-                    {device.emiDetails.totalAmount.toLocaleString('en-IN')}
-                  </p>
-                </div>
-                <div className="p-3 bg-muted/50 rounded-lg">
-                  <p className="text-xs text-muted-foreground">Monthly EMI</p>
-                  <p className="font-semibold flex items-center">
-                    <IndianRupee className="w-3 h-3" />
-                    {device.emiDetails.emiAmount.toLocaleString('en-IN')}
-                  </p>
-                </div>
-                <div className="p-3 bg-muted/50 rounded-lg">
-                  <p className="text-xs text-muted-foreground">EMI Progress</p>
-                  <p className="font-semibold">{device.emiDetails.paidEmis}/{device.emiDetails.tenure} paid</p>
-                </div>
-              </div>
-              <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Next EMI Due</p>
-                    <p className="font-semibold text-amber-600 dark:text-amber-400">
-                      {new Date(device.emiDetails.nextDueDate).toLocaleDateString('en-IN', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                      })}
-                    </p>
+              {/* Live Telemetry */}
+              {device.telemetry && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                      <Signal className="w-4 h-4" /> Live Status
+                    </h3>
+                    <Badge variant="outline" className="text-[10px] font-normal gap-1 bg-green-500/10 text-green-600 border-green-200">
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                      Active
+                    </Badge>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xs text-muted-foreground">Remaining Amount</p>
-                    <p className="font-semibold text-amber-600 dark:text-amber-400 flex items-center justify-end">
-                      <IndianRupee className="w-3 h-3" />
-                      {((device.emiDetails.tenure - device.emiDetails.paidEmis) * device.emiDetails.emiAmount).toLocaleString('en-IN')}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
 
-          {/* Controls Tab */}
-          <TabsContent value="controls" className="space-y-6">
-            {/* Main Lock Toggle */}
-            <div className={`p-4 rounded-lg border-2 ${device.isLocked ? 'border-destructive bg-destructive/5' : 'border-green-500 bg-green-500/5'}`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {device.isLocked ? (
-                    <Lock className="w-6 h-6 text-destructive" />
-                  ) : (
-                    <Unlock className="w-6 h-6 text-green-500" />
-                  )}
-                  <div>
-                    <p className="font-semibold">Device Status</p>
-                    <p className="text-sm text-muted-foreground">
-                      {device.isLocked ? 'Device is locked and restricted' : 'Device is active and functional'}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  variant={device.isLocked ? 'default' : 'destructive'}
-                  onClick={() => device.isLocked ? unlockDevice(device.id) : lockDevice(device.id)}
-                >
-                  {device.isLocked ? 'Unlock Device' : 'Lock Device'}
-                </Button>
-              </div>
-            </div>
-
-            {/* Feature Locks */}
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-4">
-                Feature Controls
-              </h3>
-              <div className="grid gap-3">
-                {[
-                  { key: 'camera', label: 'Camera', icon: Camera, desc: 'Block camera access' },
-                  { key: 'network', label: 'Mobile Network', icon: Signal, desc: 'Disable cellular data' },
-                  { key: 'wifi', label: 'WiFi', icon: Wifi, desc: 'Disable WiFi connectivity' },
-                  { key: 'powerOff', label: 'Power Off', icon: Power, desc: 'Prevent device shutdown' },
-                  { key: 'reset', label: 'Factory Reset', icon: RotateCcw, desc: 'Block factory reset' },
-                ].map(({ key, label, icon: Icon, desc }) => (
-                  <div key={key} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Icon className="w-5 h-5 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">{label}</p>
-                        <p className="text-xs text-muted-foreground">{desc}</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {/* Battery */}
+                    <div className="p-3 bg-card border border-border rounded-xl shadow-sm">
+                      <p className="text-xs text-muted-foreground mb-1">Battery</p>
+                      <div className="flex items-end gap-2">
+                        <div className={`w-3 h-6 rounded border border-foreground/30 p-[1px] flex items-end ${(device.telemetry?.batteryLevel ?? 0) < 20 ? 'text-red-500' : 'text-green-500'}`}>
+                          <div className="w-full bg-current rounded-sm" style={{ height: `${device.telemetry?.batteryLevel ?? 0}%` }} />
+                        </div>
+                        <span className="text-lg font-bold">
+                          {device.telemetry?.batteryLevel ?? '--'}%
+                        </span>
                       </div>
                     </div>
-                    <Switch
-                      checked={device.featureLocks[key as keyof typeof device.featureLocks]}
-                      onCheckedChange={(checked) => updateFeatureLocks(device.id, { [key]: checked })}
+
+                    {/* Network */}
+                    <div className="p-3 bg-card border border-border rounded-xl shadow-sm">
+                      <p className="text-xs text-muted-foreground mb-1">Network</p>
+                      <div className="flex items-center gap-2 text-blue-500">
+                        {device.telemetry?.networkType === 'wifi' ? <Wifi className="w-5 h-5" /> : <Signal className="w-5 h-5" />}
+                        <span className="text-lg font-bold text-foreground capitalize">
+                          {device.telemetry?.networkType ?? 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Carrier */}
+                    <div className="p-3 bg-card border border-border rounded-xl shadow-sm">
+                      <p className="text-xs text-muted-foreground mb-1">Carrier</p>
+                      <div className="flex items-center gap-2">
+                        <Signal className="w-5 h-5 text-purple-500" />
+                        <span className="text-lg font-bold text-foreground truncate">
+                          {device.telemetry?.simCarrier ?? 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Android Ver */}
+                    <div className="p-3 bg-card border border-border rounded-xl shadow-sm">
+                      <p className="text-xs text-muted-foreground mb-1">Android</p>
+                      <div className="flex items-center gap-2">
+                        <Smartphone className="w-5 h-5 text-orange-500" />
+                        <span className="text-lg font-bold text-foreground">
+                          v{device.telemetry?.androidVersion ? device.telemetry.androidVersion.split(' ')[0] : '?'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-right text-muted-foreground">
+                    Last sync: {device.telemetry?.lastSeen ? new Date(device.telemetry.lastSeen).toLocaleTimeString() : 'Never'}
+                  </p>
+                </div>
+              )}
+
+              {/* EMI Details */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                  EMI Status
+                </h3>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 bg-muted/30 rounded-xl border border-border">
+                    <p className="text-xs text-muted-foreground">Amount</p>
+                    <p className="font-semibold flex items-center">
+                      <IndianRupee className="w-3 h-3" />
+                      {device.emiDetails.totalAmount.toLocaleString('en-IN')}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-muted/30 rounded-xl border border-border">
+                    <p className="text-xs text-muted-foreground">Monthly</p>
+                    <p className="font-semibold flex items-center">
+                      <IndianRupee className="w-3 h-3" />
+                      {device.emiDetails.emiAmount.toLocaleString('en-IN')}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Progress Card */}
+                <div className="p-4 bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl">
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="text-amber-700 dark:text-amber-400 font-medium text-sm">EMI Progress</div>
+                    <div className="text-amber-700 dark:text-amber-400 font-bold">
+                      {device.emiDetails.paidEmis} <span className="text-amber-700/60 dark:text-amber-400/60 font-normal">/ {device.emiDetails.tenure}</span>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="h-2 w-full bg-amber-200/50 dark:bg-amber-900/30 rounded-full overflow-hidden mb-3">
+                    <div
+                      className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"
+                      style={{ width: `${(device.emiDetails.paidEmis / device.emiDetails.tenure) * 100}%` }}
                     />
                   </div>
-                ))}
 
-                {/* Remote Wipe Zone */}
-                <div className="mt-6 p-4 border border-destructive/30 bg-destructive/5 rounded-lg">
-                  <h3 className="text-sm font-bold text-destructive uppercase tracking-wide mb-2 flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4" />
-                    Danger Zone
-                  </h3>
-                  <div className="flex items-center justify-between">
+                  <div className="flex justify-between items-end pt-2 border-t border-amber-500/10">
                     <div>
-                      <p className="font-medium">Remote Internal Wipe</p>
-                      <p className="text-xs text-muted-foreground">Permanently erase all data on the device.</p>
+                      <p className="text-xs text-amber-700/80 dark:text-amber-400/80">Next Due</p>
+                      <p className="font-bold text-amber-800 dark:text-amber-300">
+                        {new Date(device.emiDetails.nextDueDate).toLocaleDateString('en-IN', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                        })}
+                      </p>
                     </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={async () => {
-                        if (confirm('ARE YOU SURE? This will FACTORY RESET the remote device!')) {
-                          try {
-                            await fetch(`${import.meta.env.VITE_API_URL}/api/devices/${device.id}/wipe`, { method: 'POST' });
-                            toast({ title: 'Wipe Command Sent', description: 'The device will reset on next sync.' });
-                          } catch (e) {
-                            console.error(e);
-                            toast({ title: 'Error', variant: 'destructive', description: 'Failed to send command' });
-                          }
-                        }
-                      }}
-                    >
-                      Wipe Data
-                    </Button>
+                    <div className="text-right">
+                      <p className="text-xs text-amber-700/80 dark:text-amber-400/80">Remaining</p>
+                      <p className="font-bold text-amber-800 dark:text-amber-300 flex items-center">
+                        <IndianRupee className="w-3 h-3" />
+                        {((device.emiDetails.tenure - device.emiDetails.paidEmis) * device.emiDetails.emiAmount).toLocaleString('en-IN')}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </TabsContent>
+            </TabsContent>
 
-          {/* Location Tab */}
-          <TabsContent value="location" className="space-y-4">
-            <div className="flex items-center justify-between">
+            {/* Controls Tab */}
+            <TabsContent value="controls" className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-300">
+              {/* Main Lock Toggle */}
+              <div className={`p-5 rounded-2xl border ${device.isLocked ? 'bg-red-500/10 border-red-500/30' : 'bg-green-500/10 border-green-500/30'}`}>
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className={`p-3 rounded-full ${device.isLocked ? 'bg-red-500/20' : 'bg-green-500/20'}`}>
+                      {device.isLocked ? (
+                        <Lock className={`w-8 h-8 ${device.isLocked ? 'text-red-500' : 'text-green-500'}`} />
+                      ) : (
+                        <Unlock className={`w-8 h-8 ${device.isLocked ? 'text-red-500' : 'text-green-500'}`} />
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-foreground">{device.isLocked ? 'Locked' : 'Unlocked'}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {device.isLocked ? 'Device restricted' : 'Device active'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <Button
+                    size="lg"
+                    className={`w-full font-semibold shadow-lg ${device.isLocked ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'}`}
+                    onClick={() => device.isLocked ? unlockDevice(device.id) : lockDevice(device.id)}
+                  >
+                    {device.isLocked ? (
+                      <><Unlock className="w-4 h-4 mr-2" /> Unlock Device</>
+                    ) : (
+                      <><Lock className="w-4 h-4 mr-2" /> Lock Device</>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Feature Locks */}
               <div>
-                <h3 className="font-semibold">Live Location</h3>
-                <p className="text-sm text-muted-foreground">
-                  Last updated: {new Date(device.location.lastUpdated).toLocaleTimeString('en-IN')}
-                </p>
-              </div>
-              <Badge variant="outline" className="gap-1">
-                <MapPin className="w-3 h-3" />
-                {device.location.lat.toFixed(6)}, {device.location.lng.toFixed(6)}
-              </Badge>
-            </div>
-
-            <Button className="w-full gap-2 mb-4" onClick={() => setShowMap(true)}>
-              <MapPin className="w-4 h-4" />
-              Open Live Map Tracking
-            </Button>
-
-            {/* Map Placeholder */}
-            <div className="relative h-64 bg-muted rounded-lg overflow-hidden border">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-green-500/10" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-destructive/20 flex items-center justify-center animate-pulse">
-                    <MapPin className="w-6 h-6 text-destructive" />
-                  </div>
-                  <p className="text-sm font-medium">{device.customerName}'s Device</p>
-                  <p className="text-xs text-muted-foreground">
-                    Lat: {device.location.lat.toFixed(6)} | Lng: {device.location.lng.toFixed(6)}
-                  </p>
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 pl-1">
+                  Restrictions
+                </h3>
+                <div className="bg-card border border-border rounded-xl divide-y divide-border overflow-hidden">
+                  {[
+                    { key: 'camera', label: 'Camera', icon: Camera, desc: 'Block camera' },
+                    { key: 'network', label: 'Network', icon: Signal, desc: 'Disable data' },
+                    { key: 'wifi', label: 'WiFi', icon: Wifi, desc: 'Disable WiFi' },
+                    { key: 'powerOff', label: 'Power Off', icon: Power, desc: 'Block shutdown' },
+                    { key: 'reset', label: 'Reset', icon: RotateCcw, desc: 'Block factory reset' },
+                  ].map(({ key, label, icon: Icon, desc }) => (
+                    <div key={key} className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-muted rounded-lg text-muted-foreground">
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">{label}</p>
+                          <p className="text-xs text-muted-foreground">{desc}</p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={device.featureLocks[key as keyof typeof device.featureLocks]}
+                        onCheckedChange={(checked) => updateFeatureLocks(device.id, { [key]: checked })}
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
-              {/* Grid lines for map effect */}
-              <div className="absolute inset-0 opacity-20">
-                {[...Array(10)].map((_, i) => (
-                  <div key={i} className="absolute border-b border-foreground/10" style={{ top: `${i * 10}%`, left: 0, right: 0 }} />
-                ))}
-                {[...Array(10)].map((_, i) => (
-                  <div key={i} className="absolute border-r border-foreground/10" style={{ left: `${i * 10}%`, top: 0, bottom: 0 }} />
-                ))}
+
+              {/* Danger Zone */}
+              <div className="p-4 border border-destructive/30 bg-destructive/5 rounded-xl">
+                <h3 className="text-sm font-bold text-destructive flex items-center gap-2 mb-3">
+                  <AlertTriangle className="w-4 h-4" /> Danger Zone
+                </h3>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <p className="text-sm text-muted-foreground">Permanently erase all data on the remote device.</p>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="w-full sm:w-auto"
+                    onClick={async () => {
+                      if (confirm('ARE YOU SURE? This will FACTORY RESET the remote device!')) {
+                        try {
+                          await fetch(`${import.meta.env.VITE_API_URL}/api/devices/${device.id}/wipe`, { method: 'POST' });
+                          toast({ title: 'Wipe Command Sent', description: 'The device will reset on next sync.' });
+                        } catch (e) {
+                          console.error(e);
+                          toast({ title: 'Error', variant: 'destructive', description: 'Failed to send command' });
+                        }
+                      }
+                    }}
+                  >
+                    Wipe Data
+                  </Button>
+                </div>
               </div>
-            </div>
+            </TabsContent>
 
-            {device.isLocked && (
-              <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg text-center">
-                <p className="text-sm text-green-600 dark:text-green-400">
-                  Real-time location tracking is active. Location updates every 10 seconds.
-                </p>
+            {/* Location & QR Tabs simplified for space */}
+            <TabsContent value="location" className="space-y-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-300">
+              <div className="relative h-[300px] md:h-[400px] bg-muted rounded-xl overflow-hidden border border-border">
+                {/* Map Placeholder */}
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
+                  <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center mb-3 animate-bounce">
+                    <MapPin className="w-8 h-8 text-blue-500" />
+                  </div>
+                  <h3 className="font-bold text-foreground text-lg mb-1">Live Location</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {device.location.lat.toFixed(6)}, {device.location.lng.toFixed(6)}
+                  </p>
+                  <Button onClick={() => setShowMap(true)} className="gap-2 shadow-lg">
+                    <MapPin className="w-4 h-4" /> Open Interactive Map
+                  </Button>
+                </div>
               </div>
-            )}
-          </TabsContent>
+            </TabsContent>
 
-          {/* QR Code Tab */}
-          <TabsContent value="qr" className="space-y-4">
-            <div className="text-center">
-              <h3 className="font-semibold mb-2">Device Registration QR Code</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Scan this QR code to view device and customer details
-              </p>
-
-              <div className="inline-block p-4 bg-white rounded-xl shadow-lg">
-                <QRCodeSVG
-                  value={device.qrCodeData}
-                  size={200}
-                  level="H"
-                  includeMargin
-                />
+            <TabsContent value="qr" className="animate-in fade-in-50 slide-in-from-bottom-2 duration-300">
+              <div className="flex flex-col items-center justify-center p-6 bg-card border border-border rounded-xl text-center">
+                <h3 className="font-bold text-lg mb-2">Device QR Code</h3>
+                <div className="p-4 bg-white rounded-xl shadow-lg mb-4">
+                  <QRCodeSVG value={device.qrCodeData || 'no-data'} size={200} />
+                </div>
+                <p className="text-sm text-muted-foreground">Scan to view device details instantly</p>
               </div>
+            </TabsContent>
+          </Tabs>
+        </div>
 
-              <div className="mt-4 p-3 bg-muted/50 rounded-lg text-left max-w-md mx-auto">
-                <p className="text-xs font-medium text-muted-foreground mb-2">QR Contains:</p>
-                <ul className="text-xs space-y-1 text-muted-foreground">
-                  <li>• Customer Name: {device.customerName}</li>
-                  <li>• Mobile: {device.mobileNo}</li>
-                  <li>• IMEI 1: {device.imei1}</li>
-                  <li>• IMEI 2: {device.imei2}</li>
-                  <li>• Aadhar: {device.aadharNo}</li>
-                </ul>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-
-        <Separator />
-
-        <div className="flex justify-between">
-          <Button variant="destructive" size="sm" onClick={handleDelete} className="gap-1">
-            <Trash2 className="w-4 h-4" />
-            Delete Device
-          </Button>
-          <Button variant="outline" onClick={onClose}>
+        {/* Sticky Footer */}
+        <div className="p-4 border-t border-border bg-card sticky bottom-0 z-20 shrink-0 flex gap-3">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="flex-1"
+          >
             Close
           </Button>
+          <Button
+            variant="destructive"
+            onClick={handleDelete}
+            className="flex-1 gap-2"
+          >
+            <Trash2 className="w-4 h-4" /> Delete
+          </Button>
         </div>
+
       </DialogContent>
       {deviceId && (
         <LocationMapModal
