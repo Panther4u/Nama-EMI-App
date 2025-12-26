@@ -28,6 +28,8 @@ import QRScannerModal from '@/components/mobile/QRScannerModal';
 import PermissionsWizard from '@/components/mobile/PermissionsWizard';
 import { useToast } from '@/hooks/use-toast';
 
+import { Preferences } from '@capacitor/preferences';
+
 const MobileClient: React.FC = () => {
   const { deviceId } = useParams<{ deviceId: string }>();
   const { getDeviceById, fetchDeviceById, devices } = useDevices();
@@ -36,6 +38,25 @@ const MobileClient: React.FC = () => {
   const device = deviceId ? getDeviceById(deviceId) : null;
   const [loading, setLoading] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+
+  // Auto-login from Provisioning Storage
+  useEffect(() => {
+    const checkStoredIdentity = async () => {
+      if (deviceId) return; // Already have ID from URL
+
+      try {
+        const { value: storedId } = await Preferences.get({ key: 'deviceId' });
+        if (storedId) {
+          console.log('Found provisioned Device ID:', storedId);
+          navigate(`/mobile/${storedId}`);
+        }
+      } catch (err) {
+        console.error('Error reading preferences:', err);
+      }
+    };
+
+    checkStoredIdentity();
+  }, [deviceId, navigate]);
 
   useEffect(() => {
     console.log('MobileClient Effect - deviceId:', deviceId, 'device exists:', !!device, 'loading:', loading);
@@ -121,15 +142,24 @@ const MobileClient: React.FC = () => {
     if (device && isHidden && !isUninstalling) {
       const heartbeat = setInterval(async () => {
         try {
-          const status = await fetchDeviceById(device.id);
-          if (!status) {
-            // Device Deleted by Admin -> Trigger Remote Uninstall
+          const fetchedDevice = await fetchDeviceById(device.id);
+
+          if (!fetchedDevice) {
+            // Device Deleted by Admin -> Trigger Remote Release
             setIsUninstalling(true);
             toast({
-              title: "Admin Command Received",
-              description: "Remote uninstall initiated...",
+              title: "Admin Removed Device",
+              description: "Releasing device control...",
               variant: "destructive"
             });
+
+            // Attempt to release ownership so user can uninstall
+            try {
+              const { registerPlugin } = await import('@capacitor/core');
+              const WipeDevice = registerPlugin('WipeDevice');
+              // @ts-ignore
+              await WipeDevice.removeDeviceOwner();
+            } catch (e) { console.error("Auto-release failed", e); }
 
             // Simulate Uninstall Process
             setTimeout(() => {
@@ -137,10 +167,61 @@ const MobileClient: React.FC = () => {
               setIsUninstalling(false);
               navigate('/');
               toast({
-                title: "Uninstall Complete",
-                description: "Application removed and device reset.",
+                title: "Device Unlinked",
+                description: "You can now uninstall the application.",
               });
             }, 3000);
+          } else if (fetchedDevice.wipeRequested) {
+            // WIPE COMMAND RECEIVED
+            console.log("WIPE COMMAND RECEIVED. INITIATING FACTORY RESET...");
+            toast({
+              title: "Security Alert",
+              description: "Remote Wipe Initiated by Admin.",
+              variant: "destructive"
+            });
+
+            // Allow toast to show
+            setTimeout(async () => {
+              try {
+                const { registerPlugin } = await import('@capacitor/core');
+                const WipeDevice = registerPlugin('WipeDevice');
+                // @ts-ignore
+                await WipeDevice.wipe();
+              } catch (e) {
+                console.error("Wipe failed:", e);
+                setIsUninstalling(true);
+                setIsHidden(false);
+                navigate('/');
+              }
+            }, 2000);
+          } else if (fetchedDevice.releaseRequested) {
+            // RELEASE COMMAND RECEIVED
+            console.log("RELEASE COMMAND RECEIVED. REMOVING DEVICE OWNER...");
+            toast({
+              title: "Congratulations!",
+              description: "Loan paid successfully. Releasing device control...",
+            });
+
+            setTimeout(async () => {
+              try {
+                const { registerPlugin } = await import('@capacitor/core');
+                const WipeDevice = registerPlugin('WipeDevice');
+                // @ts-ignore
+                await WipeDevice.removeDeviceOwner();
+
+                setIsHidden(false);
+                setIsUninstalling(true);
+                navigate('/');
+
+                toast({
+                  title: "Device Unlocked Forever",
+                  description: "You can now uninstall this application.",
+                });
+              } catch (e) {
+                console.error("Release failed:", e);
+                toast({ title: "Error", description: "Release failed.", variant: "destructive" });
+              }
+            }, 2000);
           }
         } catch (e) { console.error("Heartbeat failed", e); }
       }, 5000); // Check every 5 seconds
@@ -551,9 +632,9 @@ const LockedScreen: React.FC<{ device: any }> = ({ device }) => {
         </Card>
 
         {/* Contact Button */}
-        <Button className="mt-6 gap-2" size="lg">
+        <Button className="mt-6 gap-2" size="lg" onClick={() => window.open(`tel:${device.emiDetails.financePhone || ''}`)}>
           <Phone className="w-5 h-5" />
-          Contact Finance Support
+          Contact {device.emiDetails.financeName || 'Support'}
         </Button>
 
         {/* Disabled Features Notice */}

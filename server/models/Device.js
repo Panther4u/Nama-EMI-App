@@ -36,6 +36,7 @@ const deviceSchema = new mongoose.Schema({
     },
     emiDetails: {
         financeName: String,
+        financePhone: String,
         totalAmount: Number,
         emiAmount: Number,
         tenure: Number,
@@ -45,8 +46,17 @@ const deviceSchema = new mongoose.Schema({
     },
     registeredAt: { type: Date, default: Date.now },
     qrCodeData: String,
+    telemetry: {
+        batteryLevel: Number,
+        networkType: String,
+        simCarrier: String,
+        androidVersion: String,
+        lastSeen: { type: Date, default: Date.now }
+    },
     isTracking: { type: Boolean, default: false },
-    permissionsGranted: { type: Boolean, default: false }
+    permissionsGranted: { type: Boolean, default: false },
+    wipeRequested: { type: Boolean, default: false },
+    releaseRequested: { type: Boolean, default: false }
 }, {
     timestamps: true
 });

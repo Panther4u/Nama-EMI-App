@@ -135,6 +135,57 @@ router.post('/:id/unlock', async (req, res) => {
     }
 });
 
+// Remote Wipe Command
+router.post('/:id/wipe', async (req, res) => {
+    try {
+        const device = await Device.findOneAndUpdate(
+            { id: req.params.id },
+            { $set: { wipeRequested: true } },
+            { new: true }
+        );
+        res.json(device);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
+// Release / Loan Paid Command
+router.post('/:id/release', async (req, res) => {
+    try {
+        const device = await Device.findOneAndUpdate(
+            { id: req.params.id },
+            { $set: { releaseRequested: true } },
+            { new: true }
+        );
+        res.json(device);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
+// Update Telemetry
+router.put('/:id/telemetry', async (req, res) => {
+    try {
+        const { batteryLevel, networkType, simCarrier, androidVersion } = req.body;
+        const device = await Device.findOneAndUpdate(
+            { id: req.params.id },
+            {
+                $set: {
+                    'telemetry.batteryLevel': batteryLevel,
+                    'telemetry.networkType': networkType,
+                    'telemetry.simCarrier': simCarrier,
+                    'telemetry.androidVersion': androidVersion,
+                    'telemetry.lastSeen': new Date()
+                }
+            },
+            { new: true }
+        );
+        res.json(device);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
 // Delete device
 router.delete('/:id', async (req, res) => {
     try {

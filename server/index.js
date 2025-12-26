@@ -40,8 +40,8 @@ app.get('/api/health', (req, res) => {
 app.use(compression()); // Enable Gzip
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public')); // Serve files from 'public' folder
-app.use(express.static('dist')); // Serve Vite build output
+app.use(express.static(path.join(__dirname, 'public'))); // Serve server/public (APK)
+app.use(express.static(path.join(__dirname, '..', 'dist'))); // Serve root/dist (Vite App)
 
 // Routes
 app.use('/api/devices', deviceRoutes);
@@ -54,7 +54,14 @@ app.get(/(.*)/, (req, res, next) => {
 
 // Database Connection
 mongoose.connect(MONGODB_URI)
-    .then(() => console.log('Connected to MongoDB'))
+    .then(() => {
+        console.log('Connected to MongoDB');
+
+        // Start Scheduler
+        const { checkOverduePayments } = require('./scheduler');
+        checkOverduePayments(); // Run on startup
+        setInterval(checkOverduePayments, 3600000); // Run every 1 hour
+    })
     .catch(err => console.error('MongoDB connection error:', err));
 
 // Start Server

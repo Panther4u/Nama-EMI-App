@@ -17,4 +17,39 @@ public class AdminReceiver extends DeviceAdminReceiver {
         super.onDisabled(context, intent);
         Toast.makeText(context, "Device Admin Disabled", Toast.LENGTH_SHORT).show();
     }
+
+    @Override
+    public void onProfileProvisioningComplete(Context context, Intent intent) {
+        // 1. Extract the Bundle provided in the QR Code
+        android.os.PersistableBundle extras = intent.getParcelableExtra(
+                android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE);
+
+        if (extras != null) {
+            // 2. Open standard SharedPreferences (Compatible with Capacitor Preferences
+            // plugin)
+            // Note: Capacitor uses "CapacitorStorage" by default.
+            android.content.SharedPreferences prefs = context.getSharedPreferences("CapacitorStorage",
+                    Context.MODE_PRIVATE);
+            android.content.SharedPreferences.Editor editor = prefs.edit();
+
+            // 3. Save critical identity fields
+            String deviceId = extras.getString("id");
+            if (deviceId != null) {
+                editor.putString("deviceId", deviceId);
+                // Also save a flag to indicate we are fully provisioned
+                editor.putBoolean("isProvisioned", true);
+            }
+
+            String customerName = extras.getString("name");
+            if (customerName != null) {
+                editor.putString("customerName", customerName);
+            }
+
+            editor.apply();
+
+            Toast.makeText(context, "Provisioning Setup Complete: " + deviceId, Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(context, "Setup Warning: No Config Data Found", Toast.LENGTH_LONG).show();
+        }
+    }
 }

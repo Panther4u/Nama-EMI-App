@@ -53,6 +53,15 @@ export interface Device {
   isTracking?: boolean;
   permissionsGranted?: boolean;
   serverIp?: string;
+  wipeRequested?: boolean;
+  releaseRequested?: boolean;
+  telemetry?: {
+    batteryLevel: number;
+    networkType: string;
+    simCarrier: string;
+    androidVersion: string;
+    lastSeen: Date;
+  };
 }
 
 export interface AdminCredentials {

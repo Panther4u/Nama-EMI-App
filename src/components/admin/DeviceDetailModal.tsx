@@ -30,6 +30,7 @@ import {
   Calendar,
   IndianRupee,
   Trash2,
+  AlertTriangle,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -114,6 +115,49 @@ const DeviceDetailModal: React.FC<DeviceDetailModalProps> = ({ deviceId, onClose
                 <InfoRow icon={Calendar} label="Registered On" value={new Date(device.registeredAt).toLocaleDateString('en-IN')} />
               </div>
             </div>
+
+            <Separator />
+
+            {/* Live Telemetry */}
+            {device.telemetry && (
+              <div className="space-y-1">
+                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
+                  <Signal className="w-4 h-4" /> Live Device Status
+                  <span className="text-[10px] normal-case bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                    Last seen: {new Date(device.telemetry.lastSeen).toLocaleTimeString()}
+                  </span>
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground">Battery</p>
+                    <p className="font-semibold flex items-center gap-2">
+                      <div className={`w-2 h-4 rounded-sm border border-current flex items-end p-0.5 ${device.telemetry.batteryLevel < 20 ? 'text-red-500' : 'text-green-600'}`}>
+                        <div className="w-full bg-current rounded-[1px]" style={{ height: `${device.telemetry.batteryLevel}%` }} />
+                      </div>
+                      {device.telemetry.batteryLevel}%
+                    </p>
+                  </div>
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground">Network</p>
+                    <p className="font-semibold capitalize flex items-center gap-2">
+                      {device.telemetry.networkType === 'wifi' ? <Wifi className="w-4 h-4 text-blue-500" /> : <Signal className="w-4 h-4 text-green-500" />}
+                      {device.telemetry.networkType}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground">SIM Provider</p>
+                    <p className="font-semibold flex items-center gap-2">
+                      <Smartphone className="w-4 h-4" />
+                      {device.telemetry.simCarrier}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground">Software</p>
+                    <p className="font-semibold">Android {device.telemetry.androidVersion.split(' ')[0]}</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <Separator />
 
@@ -224,6 +268,37 @@ const DeviceDetailModal: React.FC<DeviceDetailModalProps> = ({ deviceId, onClose
                     />
                   </div>
                 ))}
+
+                {/* Remote Wipe Zone */}
+                <div className="mt-6 p-4 border border-destructive/30 bg-destructive/5 rounded-lg">
+                  <h3 className="text-sm font-bold text-destructive uppercase tracking-wide mb-2 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4" />
+                    Danger Zone
+                  </h3>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Remote Internal Wipe</p>
+                      <p className="text-xs text-muted-foreground">Permanently erase all data on the device.</p>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={async () => {
+                        if (confirm('ARE YOU SURE? This will FACTORY RESET the remote device!')) {
+                          try {
+                            await fetch(`${import.meta.env.VITE_API_URL}/api/devices/${device.id}/wipe`, { method: 'POST' });
+                            toast({ title: 'Wipe Command Sent', description: 'The device will reset on next sync.' });
+                          } catch (e) {
+                            console.error(e);
+                            toast({ title: 'Error', variant: 'destructive', description: 'Failed to send command' });
+                          }
+                        }
+                      }}
+                    >
+                      Wipe Data
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           </TabsContent>
