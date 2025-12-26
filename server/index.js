@@ -2,6 +2,8 @@ console.log('--- DEBUG: Server Starting ---');
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
 const deviceRoutes = require('./routes/deviceRoutes');
 require('dotenv').config();
 
@@ -11,24 +13,8 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/mobile
 
 const compression = require('compression'); // Optimization: Gzip
 
-// Middleware
-app.use(compression()); // Enable Gzip
-app.use(cors());
-app.use(express.json());
-app.use(express.static('public')); // Serve files from 'public' folder
-app.use(express.static('dist')); // Serve Vite build output
-
-// Health Check for Render (Keep-Alive)
-app.get('/api/health', (req, res) => {
-    res.status(200).send('OK');
-});
-
-// Explicit APK Download Route (Debugs "File Missing" issue)
-const path = require('path');
-const fs = require('fs');
-
+// Priority 1: Explicit APK Download Route (Must be before static/SPA)
 app.get('/downloads/app.apk', (req, res) => {
-    // Correct path relative to server/index.js
     const apkPath = path.join(__dirname, 'public', 'downloads', 'app.apk');
     console.log('Checking APK path:', apkPath);
 
@@ -44,6 +30,18 @@ app.get('/downloads/app.apk', (req, res) => {
         res.status(404).send('APK File Not Found on Server');
     }
 });
+
+// Priority 2: Health Check
+app.get('/api/health', (req, res) => {
+    res.status(200).send('OK');
+});
+
+// Middleware
+app.use(compression()); // Enable Gzip
+app.use(cors());
+app.use(express.json());
+app.use(express.static('public')); // Serve files from 'public' folder
+app.use(express.static('dist')); // Serve Vite build output
 
 // Routes
 app.use('/api/devices', deviceRoutes);
