@@ -1,0 +1,1 @@
+const e={getBatteryInfo:async()=>({batteryLevel:1,isCharging:!0}),getInfo:async()=>({osVersion:"Mock",name:"Mock"})},t={getStatus:async()=>({connected:!0,connectionType:"wifi"})};export{e as Device,t as Network};

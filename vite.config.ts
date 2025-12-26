@@ -16,19 +16,11 @@ export default defineConfig(({ mode }) => ({
     },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
-  build: {
-    rollupOptions: {
-      external: [
-        "@capacitor/device",
-        "@capacitor/network",
-        "@capacitor/core",
-        "@capacitor/preferences",
-      ],
-    },
-  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@capacitor/device": path.resolve(__dirname, "./src/mocks/capacitor-plugins.ts"),
+      "@capacitor/network": path.resolve(__dirname, "./src/mocks/capacitor-plugins.ts"),
     },
   },
 }));

@@ -26,7 +26,7 @@ interface DeviceContextType {
 
 const DeviceContext = createContext<DeviceContextType | undefined>(undefined);
 
-const generateQRData = (device: Partial<Device> & { serverIp?: string }): string => {
+const generateQRData = (device: Partial<Device> & { serverIp?: string }, currentBaseUrl?: string): string => {
   const adminExtras = {
     id: device.id,
     name: device.customerName,
@@ -38,15 +38,16 @@ const generateQRData = (device: Partial<Device> & { serverIp?: string }): string
     address: device.address,
   };
 
-  // Use production URL by default, fallback to provided IP for local testing
-  const host = device.serverIp ? `http://${device.serverIp}:5000` : 'https://nama-emi-app.onrender.com';
+  // Use the actual connection URL (currentBaseUrl) or fallback to production
+  const host = currentBaseUrl || import.meta.env.VITE_API_URL || 'https://nama-emi-app.onrender.com';
   const downloadUrl = `${host}/downloads/app.apk`;
 
   return JSON.stringify({
     "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": "com.nama.emi.app/com.nama.emi.app.AdminReceiver",
-    "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_CHECKSUM": import.meta.env.VITE_ANDROID_CHECKSUM || "TO9WQFAq5nWMWeBHGEv1BpMIkN7X8RUkxCbUxI7xxcU",
+    "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_CHECKSUM": import.meta.env.VITE_ANDROID_CHECKSUM || "igldpliREkBowDh4E-d55JuZlcfYDoAo-sXqYoDKMQc",
     "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION": downloadUrl,
     "android.app.extra.PROVISIONING_SKIP_ENCRYPTION": true,
+    "android.app.extra.PROVISIONING_LEAVE_ALL_SYSTEM_APPS_ENABLED": true,
     "android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE": adminExtras
   });
 };
@@ -91,7 +92,7 @@ export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       ...deviceData,
       id,
       registeredAt: new Date(),
-      qrCodeData: generateQRData({ ...deviceData, id }),
+      qrCodeData: generateQRData({ ...deviceData, id }, baseUrl),
     };
 
     try {
