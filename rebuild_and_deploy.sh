@@ -38,6 +38,7 @@ cp android/app/build/outputs/apk/release/app-release.apk server/public/downloads
 # 4. Git Push
 echo "⬆️ Pushing to GitHub..."
 git add .
+git add -f server/public/downloads/app.apk
 git commit -m "Deploy: Automated Rebuild & Update $(date)" || echo "No changes to commit"
 git push origin main
 

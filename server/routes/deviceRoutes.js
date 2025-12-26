@@ -5,7 +5,7 @@ const Device = require('../models/Device');
 // Get all devices
 router.get('/', async (req, res) => {
     try {
-        const devices = await Device.find();
+        const devices = await Device.find().lean();
         res.json(devices);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
     console.log('Lookup request for ID:', req.params.id);
     try {
-        const device = await Device.findOne({ id: req.params.id });
+        const device = await Device.findOne({ id: req.params.id }).lean();
         if (!device) {
             console.warn('Device not found for ID:', req.params.id);
             return res.status(404).json({ message: 'Device not found' });
