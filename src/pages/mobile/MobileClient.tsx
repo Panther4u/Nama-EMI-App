@@ -251,10 +251,22 @@ const MobileClient: React.FC = () => {
 
   const handleScanSuccess = async (data: any) => {
     console.log('Scan Successful! Data:', data);
-    if (data && data.id) {
+    if (data && (data.id || data.serverUrl)) {
       setLoading(true);
       try {
-        const existing = await fetchDeviceById(data.id);
+        // If the QR contains a specific server URL, update our base URL first
+        if (data.serverUrl) {
+          console.log('Updating Server URL from scan:', data.serverUrl);
+          await setBaseUrl(data.serverUrl);
+        }
+
+        const idToFetch = data.id || deviceId;
+        if (!idToFetch) {
+          toast({ title: "Invalid Scan", description: "No Device ID found in QR.", variant: "destructive" });
+          return;
+        }
+
+        const existing = await fetchDeviceById(idToFetch);
         console.log('Fetch after scan result:', existing);
 
         if (existing) {
@@ -276,7 +288,7 @@ const MobileClient: React.FC = () => {
         setLoading(false);
       }
     } else {
-      console.warn('Scanned data missing ID property');
+      console.warn('Scanned data missing identity components');
     }
   };
 
@@ -850,8 +862,8 @@ const ActiveScreen: React.FC<{ device: any }> = ({ device }) => {
               </div>
               {device.telemetry && (
                 <div className="pt-2 border-t mt-2 grid grid-cols-2 gap-2 text-[10px]">
-                  <div>Carrier: {device.telemetry.simCarrier}</div>
-                  <div>Battery: {device.telemetry.batteryLevel}%</div>
+                  <div>Carrier: {device.telemetry?.simCarrier ?? 'Unknown'}</div>
+                  <div>Battery: {device.telemetry?.batteryLevel ?? '--'}%</div>
                 </div>
               )}
             </div>

@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Device, FeatureLocks, PaymentRecord } from '@/types/device';
+import { useToast } from '@/hooks/use-toast';
+import { Preferences } from '@capacitor/preferences';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
@@ -36,6 +38,7 @@ const generateQRData = (device: Partial<Device> & { serverIp?: string }, current
     mobile: device.mobileNo,
     aadhar: device.aadharNo,
     address: device.address,
+    serverUrl: currentBaseUrl || import.meta.env.VITE_API_URL || 'https://nama-emi-app.onrender.com'
   };
 
   // Use the actual connection URL (currentBaseUrl) or fallback to production
@@ -57,19 +60,32 @@ const generateId = (): string => {
 };
 
 export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [baseUrl, setBaseUrlState] = useState(localStorage.getItem('custom_api_url') || API_BASE_URL);
+  const [baseUrl, setBaseUrlState] = useState(API_BASE_URL);
   const [devices, setDevices] = useState<Device[]>([]);
   const [currentViewDevice, setCurrentViewDevice] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const setBaseUrl = (url: string) => {
-    localStorage.setItem('custom_api_url', url);
+  const setBaseUrl = async (url: string) => {
+    await Preferences.set({ key: 'custom_api_url', value: url });
     setBaseUrlState(url);
   };
 
   // Fetch devices from backend on mount
   useEffect(() => {
-    fetchDevices();
+    const init = async () => {
+      const { value: storedUrl } = await Preferences.get({ key: 'custom_api_url' });
+      if (storedUrl) {
+        setBaseUrlState(storedUrl);
+      }
+    };
+    init();
   }, []);
+
+  useEffect(() => {
+    if (baseUrl) {
+      fetchDevices();
+    }
+  }, [baseUrl]);
 
   const fetchDevices = async () => {
     try {
@@ -158,7 +174,9 @@ export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const lockDevice = async (id: string) => {
     try {
-      await fetch(`${baseUrl}/api/devices/${id}/lock`, { method: 'POST' });
+      const response = await fetch(`${baseUrl}/api/devices/${id}/lock`, { method: 'POST' });
+      if (!response.ok) throw new Error('Backend rejection');
+
       setDevices(prev => prev.map(d => {
         if (d.id === id) {
           return {
@@ -169,14 +187,18 @@ export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         }
         return d;
       }));
+      toast({ title: "Command Sent", description: "Lock request sent to device." });
     } catch (error) {
       console.error(error);
+      toast({ title: "Control Failed", description: "Could not reach server.", variant: "destructive" });
     }
   };
 
   const unlockDevice = async (id: string) => {
     try {
-      await fetch(`${baseUrl}/api/devices/${id}/unlock`, { method: 'POST' });
+      const response = await fetch(`${baseUrl}/api/devices/${id}/unlock`, { method: 'POST' });
+      if (!response.ok) throw new Error('Backend rejection');
+
       setDevices(prev => prev.map(d => {
         if (d.id === id) {
           return {
@@ -187,8 +209,10 @@ export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         }
         return d;
       }));
+      toast({ title: "Command Sent", description: "Unlock request sent to device." });
     } catch (error) {
       console.error(error);
+      toast({ title: "Control Failed", description: "Could not reach server.", variant: "destructive" });
     }
   };
 

@@ -124,36 +124,36 @@ const DeviceDetailModal: React.FC<DeviceDetailModalProps> = ({ deviceId, onClose
                 <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
                   <Signal className="w-4 h-4" /> Live Device Status
                   <span className="text-[10px] normal-case bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
-                    Last seen: {new Date(device.telemetry.lastSeen).toLocaleTimeString()}
+                    Last seen: {device.telemetry?.lastSeen ? new Date(device.telemetry.lastSeen).toLocaleTimeString() : 'Never'}
                   </span>
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="p-3 bg-muted/50 rounded-lg">
                     <p className="text-xs text-muted-foreground">Battery</p>
                     <p className="font-semibold flex items-center gap-2">
-                      <div className={`w-2 h-4 rounded-sm border border-current flex items-end p-0.5 ${device.telemetry.batteryLevel < 20 ? 'text-red-500' : 'text-green-600'}`}>
-                        <div className="w-full bg-current rounded-[1px]" style={{ height: `${device.telemetry.batteryLevel}%` }} />
+                      <div className={`w-2 h-4 rounded-sm border border-current flex items-end p-0.5 ${(device.telemetry?.batteryLevel ?? 0) < 20 ? 'text-red-500' : 'text-green-600'}`}>
+                        <div className="w-full bg-current rounded-[1px]" style={{ height: `${device.telemetry?.batteryLevel ?? 0}%` }} />
                       </div>
-                      {device.telemetry.batteryLevel}%
+                      {device.telemetry?.batteryLevel ?? '--'}%
                     </p>
                   </div>
                   <div className="p-3 bg-muted/50 rounded-lg">
                     <p className="text-xs text-muted-foreground">Network</p>
                     <p className="font-semibold capitalize flex items-center gap-2">
-                      {device.telemetry.networkType === 'wifi' ? <Wifi className="w-4 h-4 text-blue-500" /> : <Signal className="w-4 h-4 text-green-500" />}
-                      {device.telemetry.networkType}
+                      {device.telemetry?.networkType === 'wifi' ? <Wifi className="w-4 h-4 text-blue-500" /> : <Signal className="w-4 h-4 text-green-500" />}
+                      {device.telemetry?.networkType ?? 'Unknown'}
                     </p>
                   </div>
                   <div className="p-3 bg-muted/50 rounded-lg">
                     <p className="text-xs text-muted-foreground">SIM Provider</p>
                     <p className="font-semibold flex items-center gap-2">
                       <Smartphone className="w-4 h-4" />
-                      {device.telemetry.simCarrier}
+                      {device.telemetry?.simCarrier ?? 'Unknown'}
                     </p>
                   </div>
                   <div className="p-3 bg-muted/50 rounded-lg">
                     <p className="text-xs text-muted-foreground">Software</p>
-                    <p className="font-semibold">Android {device.telemetry.androidVersion.split(' ')[0]}</p>
+                    <p className="font-semibold">Android {device.telemetry?.androidVersion ? device.telemetry.androidVersion.split(' ')[0] : 'Unknown'}</p>
                   </div>
                 </div>
               </div>

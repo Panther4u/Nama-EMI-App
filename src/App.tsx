@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { DeviceProvider } from "@/context/DeviceContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -27,7 +28,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<Index />} />
+      <Route path="/" element={<AdminLogin />} />
       <Route path="/admin" element={<AdminLogin />} />
       <Route
         path="/admin/dashboard"
@@ -39,7 +40,7 @@ const AppRoutes = () => {
       />
       <Route path="/mobile" element={<MobileClient />} />
       <Route path="/mobile/:deviceId" element={<MobileClient />} />
-      <Route path="*" element={<NotFound />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };
@@ -47,19 +48,21 @@ const AppRoutes = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <AuthProvider>
-        <DeviceProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <div className="mobile-wrapper">
-              <div className="mobile-container">
-                <AppRoutes />
+      <ThemeProvider>
+        <AuthProvider>
+          <DeviceProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <div className="mobile-wrapper">
+                <div className="mobile-container">
+                  <AppRoutes />
+                </div>
               </div>
-            </div>
-          </BrowserRouter>
-        </DeviceProvider>
-      </AuthProvider>
+            </BrowserRouter>
+          </DeviceProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

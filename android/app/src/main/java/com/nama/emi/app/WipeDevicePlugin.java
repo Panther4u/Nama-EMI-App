@@ -96,4 +96,175 @@ public class WipeDevicePlugin extends Plugin {
             call.reject("Failed to release control: " + e.getMessage());
         }
     }
+
+    @PluginMethod
+    public void enforceDeviceRestrictions(PluginCall call) {
+        Context context = getContext();
+        DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
+        ComponentName adminComponent = new ComponentName(context, AdminReceiver.class);
+
+        if (dpm.isDeviceOwnerApp(context.getPackageName())) {
+            try {
+                // Disable factory reset
+                dpm.addUserRestriction(adminComponent, android.os.UserManager.DISALLOW_FACTORY_RESET);
+
+                // Disable safe mode
+                dpm.addUserRestriction(adminComponent, android.os.UserManager.DISALLOW_SAFE_BOOT);
+
+                // Disable adding users
+                dpm.addUserRestriction(adminComponent, android.os.UserManager.DISALLOW_ADD_USER);
+
+                // Disable USB file transfer
+                dpm.addUserRestriction(adminComponent, android.os.UserManager.DISALLOW_USB_FILE_TRANSFER);
+
+                // Disable uninstalling apps
+                dpm.addUserRestriction(adminComponent, android.os.UserManager.DISALLOW_UNINSTALL_APPS);
+
+                // Disable modifying accounts
+                dpm.addUserRestriction(adminComponent, android.os.UserManager.DISALLOW_MODIFY_ACCOUNTS);
+
+                // Set lock task packages (kiosk mode)
+                dpm.setLockTaskPackages(adminComponent, new String[] { context.getPackageName() });
+
+                JSObject ret = new JSObject();
+                ret.put("success", true);
+                ret.put("message", "Device restrictions enforced");
+                call.resolve(ret);
+            } catch (Exception e) {
+                call.reject("Failed to enforce restrictions: " + e.getMessage());
+            }
+        } else {
+            call.reject("App is not Device Owner");
+        }
+    }
+
+    @PluginMethod
+    public void disableCamera(PluginCall call) {
+        DevicePolicyManager dpm = (DevicePolicyManager) getContext().getSystemService(Context.DEVICE_POLICY_SERVICE);
+        ComponentName adminComponent = new ComponentName(getContext(), AdminReceiver.class);
+
+        boolean disable = call.getBoolean("disable", true);
+
+        if (dpm.isDeviceOwnerApp(getContext().getPackageName())) {
+            dpm.setCameraDisabled(adminComponent, disable);
+            JSObject ret = new JSObject();
+            ret.put("success", true);
+            ret.put("cameraDisabled", disable);
+            call.resolve(ret);
+        } else {
+            call.reject("Not Device Owner");
+        }
+    }
+
+    @PluginMethod
+    public void disableScreenCapture(PluginCall call) {
+        DevicePolicyManager dpm = (DevicePolicyManager) getContext().getSystemService(Context.DEVICE_POLICY_SERVICE);
+        ComponentName adminComponent = new ComponentName(getContext(), AdminReceiver.class);
+
+        boolean disable = call.getBoolean("disable", true);
+
+        if (dpm.isDeviceOwnerApp(getContext().getPackageName())) {
+            dpm.setScreenCaptureDisabled(adminComponent, disable);
+            JSObject ret = new JSObject();
+            ret.put("success", true);
+            ret.put("screenCaptureDisabled", disable);
+            call.resolve(ret);
+        } else {
+            call.reject("Not Device Owner");
+        }
+    }
+
+    @PluginMethod
+    public void setNetworkRestrictions(PluginCall call) {
+        DevicePolicyManager dpm = (DevicePolicyManager) getContext().getSystemService(Context.DEVICE_POLICY_SERVICE);
+        ComponentName adminComponent = new ComponentName(getContext(), AdminReceiver.class);
+
+        boolean disableWifi = call.getBoolean("disableWifi", false);
+        boolean disableMobileData = call.getBoolean("disableMobileData", false);
+
+        if (dpm.isDeviceOwnerApp(getContext().getPackageName())) {
+            try {
+                if (disableWifi) {
+                    dpm.addUserRestriction(adminComponent, android.os.UserManager.DISALLOW_CONFIG_WIFI);
+                } else {
+                    dpm.clearUserRestriction(adminComponent, android.os.UserManager.DISALLOW_CONFIG_WIFI);
+                }
+
+                if (disableMobileData) {
+                    dpm.addUserRestriction(adminComponent, android.os.UserManager.DISALLOW_CONFIG_MOBILE_NETWORKS);
+                } else {
+                    dpm.clearUserRestriction(adminComponent, android.os.UserManager.DISALLOW_CONFIG_MOBILE_NETWORKS);
+                }
+
+                JSObject ret = new JSObject();
+                ret.put("success", true);
+                ret.put("wifiDisabled", disableWifi);
+                ret.put("mobileDataDisabled", disableMobileData);
+                call.resolve(ret);
+            } catch (Exception e) {
+                call.reject("Failed to set network restrictions: " + e.getMessage());
+            }
+        } else {
+            call.reject("Not Device Owner");
+        }
+    }
+
+    @PluginMethod
+    public void lockDevice(PluginCall call) {
+        DevicePolicyManager dpm = (DevicePolicyManager) getContext().getSystemService(Context.DEVICE_POLICY_SERVICE);
+        ComponentName adminComponent = new ComponentName(getContext(), AdminReceiver.class);
+
+        if (dpm.isAdminActive(adminComponent)) {
+            dpm.lockNow();
+            JSObject ret = new JSObject();
+            ret.put("success", true);
+            ret.put("message", "Device locked");
+            call.resolve(ret);
+        } else {
+            call.reject("Device Admin not active");
+        }
+    }
+
+    @PluginMethod
+    public void checkTamperAttempts(PluginCall call) {
+        Context context = getContext();
+        DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
+        ComponentName adminComponent = new ComponentName(context, AdminReceiver.class);
+
+        JSObject result = new JSObject();
+
+        // Check if still Device Owner
+        boolean isDeviceOwner = dpm.isDeviceOwnerApp(context.getPackageName());
+        result.put("isDeviceOwner", isDeviceOwner);
+
+        // Check if admin is active
+        boolean isAdminActive = dpm.isAdminActive(adminComponent);
+        result.put("isAdminActive", isAdminActive);
+
+        // Check if developer options enabled
+        try {
+            boolean devOptionsEnabled = android.provider.Settings.Global.getInt(
+                    context.getContentResolver(),
+                    android.provider.Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) != 0;
+            result.put("developerOptionsEnabled", devOptionsEnabled);
+        } catch (Exception e) {
+            result.put("developerOptionsEnabled", false);
+        }
+
+        // Check if ADB enabled
+        try {
+            boolean adbEnabled = android.provider.Settings.Global.getInt(
+                    context.getContentResolver(),
+                    android.provider.Settings.Global.ADB_ENABLED, 0) != 0;
+            result.put("adbEnabled", adbEnabled);
+        } catch (Exception e) {
+            result.put("adbEnabled", false);
+        }
+
+        // Overall tamper status
+        boolean tampered = !isDeviceOwner || !isAdminActive;
+        result.put("tampered", tampered);
+
+        call.resolve(result);
+    }
 }

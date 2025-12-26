@@ -45,6 +45,11 @@ public class AdminReceiver extends DeviceAdminReceiver {
                 editor.putString("customerName", customerName);
             }
 
+            String serverUrl = extras.getString("serverUrl");
+            if (serverUrl != null) {
+                editor.putString("custom_api_url", serverUrl);
+            }
+
             editor.apply();
 
             Toast.makeText(context, "Provisioning Setup Complete: " + deviceId, Toast.LENGTH_LONG).show();

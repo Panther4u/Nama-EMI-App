@@ -8,10 +8,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Default admin credentials
+// Default admin credentials - Mobile number + PIN
 const ADMIN_CREDENTIALS = {
-  username: 'admin',
-  password: 'admin123',
+  username: '9876543210', // Mobile number
+  password: '1234',       // Numeric PIN
 };
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
