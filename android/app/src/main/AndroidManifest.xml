@@ -24,6 +24,12 @@
 
         </activity>
 
+        <activity
+            android:name=".ProvisioningCompleteActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.NoDisplay">
+        </activity>
+
         <receiver
             android:name=".AdminReceiver"
             android:description="@string/app_name"

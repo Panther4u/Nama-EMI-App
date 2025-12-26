@@ -123,8 +123,8 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ isOpen, onClose }) => {
   };
 
   if (showQR && createdDevice) {
-    // Checksum for current APK (2yEe62dFMRnbXrLJfyG9iK3ACBD8vnBsCjRgksIn1Uk= -> URL Safe)
-    const apkChecksum = "2yEe62dFMRnbXrLJfyG9iK3ACBD8vnBsCjRgksIn1Uk";
+    // Checksum for current APK (JyJg7DCgn+IBB+PyfZlNgX5ZMmn9c1+VN7fr3TO03BA= -> URL Safe)
+    const apkChecksum = "JyJg7DCgn-IBB-PyfZlNgX5ZMmn9c1-VN7fr3TO03BA";
 
     const qrData = JSON.stringify({
       "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": "com.nama.emi.app/.AdminReceiver",

@@ -80,14 +80,22 @@ public class AdminReceiver extends DeviceAdminReceiver {
 
     private void launchApp(Context context) {
         try {
-            Intent launch = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
-            if (launch != null) {
-                launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                context.startActivity(launch);
-                Toast.makeText(context, "Provisioning Complete. Starting App...", Toast.LENGTH_LONG).show();
-            }
+            Intent launch = new Intent(context, ProvisioningCompleteActivity.class);
+            launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(launch);
+            Toast.makeText(context, "Provisioning Complete. Starting App...", Toast.LENGTH_LONG).show();
         } catch (Exception e) {
             e.printStackTrace();
+            // Fallback to package manager launch
+            try {
+                Intent fallback = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
+                if (fallback != null) {
+                    fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(fallback);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
     }
 }
