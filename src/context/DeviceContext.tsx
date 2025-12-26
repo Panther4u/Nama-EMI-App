@@ -20,6 +20,8 @@ interface DeviceContextType {
   startTracking: (id: string) => Promise<void>;
   stopTracking: (id: string) => Promise<void>;
   updateLocation: (id: string, lat: number, lng: number) => Promise<void>;
+  setBaseUrl: (url: string) => void;
+  baseUrl: string;
 }
 
 const DeviceContext = createContext<DeviceContextType | undefined>(undefined);
@@ -54,8 +56,14 @@ const generateId = (): string => {
 };
 
 export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [baseUrl, setBaseUrlState] = useState(localStorage.getItem('custom_api_url') || API_BASE_URL);
   const [devices, setDevices] = useState<Device[]>([]);
   const [currentViewDevice, setCurrentViewDevice] = useState<string | null>(null);
+
+  const setBaseUrl = (url: string) => {
+    localStorage.setItem('custom_api_url', url);
+    setBaseUrlState(url);
+  };
 
   // Fetch devices from backend on mount
   useEffect(() => {
@@ -64,7 +72,7 @@ export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const fetchDevices = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/devices`);
+      const response = await fetch(`${baseUrl}/api/devices`);
       if (response.ok) {
         const data = await response.json();
         console.log('Fetched all devices. Count:', data.length);
@@ -87,7 +95,7 @@ export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     };
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/devices`, {
+      const response = await fetch(`${baseUrl}/api/devices`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newDevice),
@@ -116,7 +124,7 @@ export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
 
-      const response = await fetch(`${API_BASE_URL}/api/devices/${id}`, {
+      const response = await fetch(`${baseUrl}/api/devices/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
@@ -134,7 +142,7 @@ export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const deleteDevice = async (id: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/devices/${id}`, {
+      const response = await fetch(`${baseUrl}/api/devices/${id}`, {
         method: 'DELETE',
       });
       if (response.ok) {
@@ -149,7 +157,7 @@ export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const lockDevice = async (id: string) => {
     try {
-      await fetch(`${API_BASE_URL}/api/devices/${id}/lock`, { method: 'POST' });
+      await fetch(`${baseUrl}/api/devices/${id}/lock`, { method: 'POST' });
       setDevices(prev => prev.map(d => {
         if (d.id === id) {
           return {
@@ -167,7 +175,7 @@ export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const unlockDevice = async (id: string) => {
     try {
-      await fetch(`${API_BASE_URL}/api/devices/${id}/unlock`, { method: 'POST' });
+      await fetch(`${baseUrl}/api/devices/${id}/unlock`, { method: 'POST' });
       setDevices(prev => prev.map(d => {
         if (d.id === id) {
           return {
@@ -213,7 +221,7 @@ export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     currentDueDate.setMonth(currentDueDate.getMonth() + 1);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/devices/${deviceId}/payment`, {
+      const response = await fetch(`${baseUrl}/api/devices/${deviceId}/payment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -241,7 +249,7 @@ export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const updateLocation = async (id: string, lat: number, lng: number) => {
     try {
-      await fetch(`${API_BASE_URL}/api/devices/${id}/location`, {
+      await fetch(`${baseUrl}/api/devices/${id}/location`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lat, lng }),
@@ -262,7 +270,7 @@ export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s fetch timeout
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/devices/${id}`, {
+      const response = await fetch(`${baseUrl}/api/devices/${id}`, {
         signal: controller.signal
       });
       clearTimeout(timeoutId);
@@ -307,6 +315,8 @@ export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       startTracking,
       stopTracking,
       updateLocation,
+      setBaseUrl,
+      baseUrl,
     }}>
       {children}
     </DeviceContext.Provider>

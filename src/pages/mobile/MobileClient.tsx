@@ -11,6 +11,7 @@ import {
   ArrowLeft,
   Smartphone,
   Shield,
+  Settings2,
 } from 'lucide-react';
 import {
   Dialog,
@@ -32,12 +33,14 @@ import { Preferences } from '@capacitor/preferences';
 
 const MobileClient: React.FC = () => {
   const { deviceId } = useParams<{ deviceId: string }>();
-  const { getDeviceById, fetchDeviceById, devices } = useDevices();
+  const { getDeviceById, fetchDeviceById, devices, baseUrl, setBaseUrl } = useDevices();
   const navigate = useNavigate();
   const [inputDeviceId, setInputDeviceId] = useState('');
   const device = deviceId ? getDeviceById(deviceId) : null;
   const [loading, setLoading] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [newServerUrl, setNewServerUrl] = useState(baseUrl);
 
   // Auto-login from Provisioning Storage
   useEffect(() => {
@@ -137,23 +140,17 @@ const MobileClient: React.FC = () => {
   const [isHidden, setIsHidden] = useState(false);
   const [isUninstalling, setIsUninstalling] = useState(false);
 
-  // HEARTBEAT: Check if device still exists (Simulate "Remote Admin Control")
+  // HEARTBEAT & TELEMETRY
   useEffect(() => {
     if (device && isHidden && !isUninstalling) {
       const heartbeat = setInterval(async () => {
         try {
+          // 1. Fetch Command state
           const fetchedDevice = await fetchDeviceById(device.id);
 
           if (!fetchedDevice) {
-            // Device Deleted by Admin -> Trigger Remote Release
             setIsUninstalling(true);
-            toast({
-              title: "Admin Removed Device",
-              description: "Releasing device control...",
-              variant: "destructive"
-            });
-
-            // Attempt to release ownership so user can uninstall
+            toast({ title: "Admin Removed Device", description: "Releasing device control...", variant: "destructive" });
             try {
               const { registerPlugin } = await import('@capacitor/core');
               const WipeDevice = registerPlugin('WipeDevice');
@@ -161,26 +158,19 @@ const MobileClient: React.FC = () => {
               await WipeDevice.removeDeviceOwner();
             } catch (e) { console.error("Auto-release failed", e); }
 
-            // Simulate Uninstall Process
             setTimeout(() => {
               setIsHidden(false);
               setIsUninstalling(false);
               navigate('/');
-              toast({
-                title: "Device Unlinked",
-                description: "You can now uninstall the application.",
-              });
+              toast({ title: "Device Unlinked", description: "You can now uninstall the application." });
             }, 3000);
-          } else if (fetchedDevice.wipeRequested) {
-            // WIPE COMMAND RECEIVED
-            console.log("WIPE COMMAND RECEIVED. INITIATING FACTORY RESET...");
-            toast({
-              title: "Security Alert",
-              description: "Remote Wipe Initiated by Admin.",
-              variant: "destructive"
-            });
+            return;
+          }
 
-            // Allow toast to show
+          // 2. Handle Actions
+          if (fetchedDevice.wipeRequested) {
+            console.log("WIPE COMMAND RECEIVED...");
+            toast({ title: "Security Alert", description: "Remote Wipe Initiated.", variant: "destructive" });
             setTimeout(async () => {
               try {
                 const { registerPlugin } = await import('@capacitor/core');
@@ -189,45 +179,56 @@ const MobileClient: React.FC = () => {
                 await WipeDevice.wipe();
               } catch (e) {
                 console.error("Wipe failed:", e);
-                setIsUninstalling(true);
-                setIsHidden(false);
-                navigate('/');
+                setIsUninstalling(true); setIsHidden(false); navigate('/');
               }
             }, 2000);
           } else if (fetchedDevice.releaseRequested) {
-            // RELEASE COMMAND RECEIVED
-            console.log("RELEASE COMMAND RECEIVED. REMOVING DEVICE OWNER...");
-            toast({
-              title: "Congratulations!",
-              description: "Loan paid successfully. Releasing device control...",
-            });
-
+            console.log("RELEASE COMMAND RECEIVED...");
+            toast({ title: "Congratulations!", description: "Loan paid successfully." });
             setTimeout(async () => {
               try {
                 const { registerPlugin } = await import('@capacitor/core');
                 const WipeDevice = registerPlugin('WipeDevice');
                 // @ts-ignore
                 await WipeDevice.removeDeviceOwner();
-
-                setIsHidden(false);
-                setIsUninstalling(true);
-                navigate('/');
-
-                toast({
-                  title: "Device Unlocked Forever",
-                  description: "You can now uninstall this application.",
-                });
-              } catch (e) {
-                console.error("Release failed:", e);
-                toast({ title: "Error", description: "Release failed.", variant: "destructive" });
-              }
+                setIsHidden(false); setIsUninstalling(true); navigate('/');
+                toast({ title: "Device Unlocked Forever", description: "You can now uninstall this application." });
+              } catch (e) { console.error("Release failed:", e); }
             }, 2000);
           }
+
+          // 3. Send Telemetry
+          try {
+            const { Device: CapDevice } = await import('@capacitor/device');
+            const { Network: CapNetwork } = await import('@capacitor/network');
+            const { registerPlugin } = await import('@capacitor/core');
+            const WipeDevice = registerPlugin('WipeDevice');
+
+            const battery = await CapDevice.getBatteryInfo();
+            const network = await CapNetwork.getStatus();
+            const info = await CapDevice.getInfo();
+            // @ts-ignore
+            const sim = await WipeDevice.getSimInfo();
+
+            await fetch(`${baseUrl}/api/devices/${device.id}/telemetry`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                batteryLevel: Math.round((battery.batteryLevel || 0) * 100),
+                networkType: network.connectionType,
+                simCarrier: sim.carrier,
+                androidVersion: info.osVersion,
+                lastSeen: new Date()
+              })
+            });
+          } catch (e) { console.error("Telemetry update failed", e); }
+
         } catch (e) { console.error("Heartbeat failed", e); }
-      }, 5000); // Check every 5 seconds
+      }, 10000); // Run every 10 seconds
+
       return () => clearInterval(heartbeat);
     }
-  }, [device, isHidden, isUninstalling]);
+  }, [device, isHidden, isUninstalling, baseUrl]);
 
   const handlePermissionsComplete = () => {
     if (device) {
@@ -347,6 +348,18 @@ const MobileClient: React.FC = () => {
           </Dialog>
 
           <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center px-1">
+                <p className="text-xs font-medium text-muted-foreground">Server Configuration</p>
+                <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => setShowSettings(true)}>
+                  <Settings2 className="w-3 h-3 mr-1" /> Change URL
+                </Button>
+              </div>
+              <div className="p-2 bg-muted/50 rounded-md border text-[10px] break-all font-mono">
+                {baseUrl}
+              </div>
+            </div>
+
             <div className="space-y-1">
               <p className="text-xs font-medium text-muted-foreground ml-1">Manual Device Link (Admin)</p>
               <div className="flex gap-2">
@@ -379,6 +392,35 @@ const MobileClient: React.FC = () => {
               </div>
             </div>
 
+            <Dialog open={showSettings} onOpenChange={setShowSettings}>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Server Settings</DialogTitle>
+                  <DialogDescription>
+                    Configure the backend API URL for this client.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">API Endpoint URL</p>
+                    <Input
+                      value={newServerUrl}
+                      onChange={(e) => setNewServerUrl(e.target.value)}
+                      placeholder="https://api.example.com"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowSettings(false)}>Cancel</Button>
+                  <Button onClick={() => {
+                    setBaseUrl(newServerUrl);
+                    setShowSettings(false);
+                    toast({ title: "Settings Saved", description: "API URL updated successfully." });
+                  }}>Save Changes</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
             <div className="flex gap-2">
               <Input
                 placeholder="Enter Device ID"
@@ -387,6 +429,31 @@ const MobileClient: React.FC = () => {
               />
               <Button onClick={() => inputDeviceId && navigate(`/mobile/${inputDeviceId}`)}>
                 Go
+              </Button>
+            </div>
+
+            <div className="p-4 bg-muted/30 rounded-lg border border-primary/10 space-y-3">
+              <h3 className="text-xs font-semibold flex items-center gap-2">
+                <Settings2 className="w-3 h-3 text-primary" />
+                Installation Configuration
+              </h3>
+              <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
+                <div className="text-muted-foreground whitespace-nowrap">Server URL:</div>
+                <div className="truncate text-right">{baseUrl.replace('https://', '').replace('http://', '')}</div>
+
+                <div className="text-muted-foreground">Admin Status:</div>
+                <div className="text-right text-emerald-600 font-bold italic">ENABLED</div>
+
+                <div className="text-muted-foreground">App Persistence:</div>
+                <div className="text-right text-emerald-500">AUTO-START ACTIVE</div>
+              </div>
+              <Button
+                variant="link"
+                size="sm"
+                className="h-4 p-0 text-[10px] text-primary"
+                onClick={() => setShowSettings(true)}
+              >
+                Change Config
               </Button>
             </div>
 
@@ -758,6 +825,35 @@ const ActiveScreen: React.FC<{ device: any }> = ({ device }) => {
                 <span className="text-muted-foreground">IMEI 2</span>
                 <span className="font-mono text-xs">{device.imei2}</span>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* System Monitoring Status */}
+        <Card className="bg-muted/30">
+          <CardContent className="p-4 space-y-3">
+            <h2 className="font-semibold flex items-center gap-2">
+              <Shield className="w-4 h-4 text-emerald-500" />
+              Security Status
+            </h2>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Admin Status</span>
+                <span className="text-emerald-600 font-medium">Verified Active</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Monitoring</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs">Live Telemetry</span>
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                </div>
+              </div>
+              {device.telemetry && (
+                <div className="pt-2 border-t mt-2 grid grid-cols-2 gap-2 text-[10px]">
+                  <div>Carrier: {device.telemetry.simCarrier}</div>
+                  <div>Battery: {device.telemetry.batteryLevel}%</div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

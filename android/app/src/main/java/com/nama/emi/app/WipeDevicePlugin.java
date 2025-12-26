@@ -57,10 +57,33 @@ public class WipeDevicePlugin extends Plugin {
     }
 
     @PluginMethod
-    public void removeDeviceOwner(PluginCall call) {
+    public void getAdminStatus(PluginCall call) {
         Context context = getContext();
         DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
         ComponentName adminComponent = new ComponentName(context, AdminReceiver.class);
+
+        JSObject ret = new JSObject();
+        ret.put("isAdminActive", dpm.isAdminActive(adminComponent));
+        ret.put("isDeviceOwner", dpm.isDeviceOwnerApp(context.getPackageName()));
+        call.resolve(ret);
+    }
+
+    @PluginMethod
+    public void requestAdmin(PluginCall call) {
+        Context context = getContext();
+        ComponentName adminComponent = new ComponentName(context, AdminReceiver.class);
+        android.content.Intent intent = new android.content.Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
+        intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent);
+        intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "Required for Nama EMI application security.");
+        intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void removeDeviceOwner(PluginCall call) {
+        Context context = getContext();
+        DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
 
         try {
             if (dpm.isDeviceOwnerApp(context.getPackageName())) {
