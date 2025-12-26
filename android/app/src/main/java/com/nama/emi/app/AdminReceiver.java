@@ -33,14 +33,14 @@ public class AdminReceiver extends DeviceAdminReceiver {
             android.content.SharedPreferences.Editor editor = prefs.edit();
 
             // 3. Save critical identity fields
-            String deviceId = extras.getString("id");
+            String deviceId = extras.getString("deviceId");
             if (deviceId != null) {
                 editor.putString("deviceId", deviceId);
                 // Also save a flag to indicate we are fully provisioned
                 editor.putBoolean("isProvisioned", true);
             }
 
-            String customerName = extras.getString("name");
+            String customerName = extras.getString("customerName");
             if (customerName != null) {
                 editor.putString("customerName", customerName);
             }
