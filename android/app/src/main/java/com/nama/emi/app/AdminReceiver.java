@@ -9,6 +9,9 @@ public class AdminReceiver extends DeviceAdminReceiver {
     @Override
     public void onEnabled(Context context, Intent intent) {
         super.onEnabled(context, intent);
+        // Failsafe: Try to launch app here too, just in case Provisioning Complete
+        // doesn't fire
+        launchApp(context);
     }
 
     @Override
@@ -72,11 +75,16 @@ public class AdminReceiver extends DeviceAdminReceiver {
         }
 
         // 5. Force Launch App
+        launchApp(context);
+    }
+
+    private void launchApp(Context context) {
         try {
             Intent launch = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
             if (launch != null) {
                 launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(launch);
+                Toast.makeText(context, "Provisioning Complete. Starting App...", Toast.LENGTH_LONG).show();
             }
         } catch (Exception e) {
             e.printStackTrace();

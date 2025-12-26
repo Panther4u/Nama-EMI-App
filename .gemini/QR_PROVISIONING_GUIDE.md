@@ -124,7 +124,7 @@ The QR code from admin panel must include:
 {
   "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": "com.nama.emi.app/.AdminReceiver",
   "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION": "https://nama-emi-app.onrender.com/downloads/nama-emi.apk",
-  "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_CHECKSUM": "SsRDEvbLTEDXHdcXRgmRuxDRxvSm3UejbhCOrwXZ-nU", // <--- Must match APK!
+  "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_CHECKSUM": "2yEe62dFMRnbXrLJfyG9iK3ACBD8vnBsCjRgksIn1Uk", // <--- Must match APK!
   "android.app.extra.PROVISIONING_SKIP_ENCRYPTION": true,
   "deviceId": "abc123",
   "serverUrl": "https://nama-emi-app.onrender.com",
