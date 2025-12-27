@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { DeviceProvider } from "@/context/DeviceContext";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { Capacitor } from '@capacitor/core';
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -14,9 +15,17 @@ import MobileClient from "./pages/mobile/MobileClient";
 
 const queryClient = new QueryClient();
 
+// Check if running on native mobile platform
+const isMobileApp = Capacitor.isNativePlatform();
+
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth();
+
+  // Block admin access on mobile APK
+  if (isMobileApp) {
+    return <Navigate to="/mobile" replace />;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/admin" replace />;
@@ -30,19 +39,32 @@ import Entry from "./Entry";
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<Entry />} />
-      <Route path="/admin" element={<AdminLogin />} />
-      <Route
-        path="/admin/dashboard"
-        element={
-          <ProtectedRoute>
-            <AdminDashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="/mobile" element={<MobileClient />} />
-      <Route path="/mobile/:deviceId" element={<MobileClient />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Mobile App: Only show lockscreen, block admin access */}
+      {isMobileApp ? (
+        <>
+          <Route path="/" element={<Navigate to="/mobile" replace />} />
+          <Route path="/mobile" element={<MobileClient />} />
+          <Route path="/mobile/:deviceId" element={<MobileClient />} />
+          <Route path="*" element={<Navigate to="/mobile" replace />} />
+        </>
+      ) : (
+        <>
+          {/* Web App: Full admin access */}
+          <Route path="/" element={<Entry />} />
+          <Route path="/admin" element={<AdminLogin />} />
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/mobile" element={<MobileClient />} />
+          <Route path="/mobile/:deviceId" element={<MobileClient />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </>
+      )}
     </Routes>
   );
 };
