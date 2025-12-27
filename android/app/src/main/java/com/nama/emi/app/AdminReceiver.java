@@ -8,20 +8,15 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.PersistableBundle;
-import android.os.UserManager;
+import android.util.Log;
 import android.widget.Toast;
 
 public class AdminReceiver extends DeviceAdminReceiver {
+    private static final String TAG = "AdminReceiver";
+
     @Override
     public void onEnabled(Context context, Intent intent) {
         super.onEnabled(context, intent);
-        // Failsafe: Try to launch app here too
-        launchApp(context);
-    }
-
-    @Override
-    public void onDisabled(Context context, Intent intent) {
-        super.onDisabled(context, intent);
     }
 
     @Override
@@ -29,53 +24,9 @@ public class AdminReceiver extends DeviceAdminReceiver {
         DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
         ComponentName admin = new ComponentName(context, AdminReceiver.class);
 
-        // 1. Set Permission Policy to AUTO_GRANT
-        // This ensures all runtime permissions (Camera, Location, etc.) are
-        // automatically granted
-        // without asking the user.
-        try {
-            dpm.setPermissionPolicy(admin, DevicePolicyManager.PERMISSION_POLICY_AUTO_GRANT);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        // 2. Explicitly Grant Critical Permissions to Self
-        // Just to be absolutely sure, we grant specific permissions to our own package.
-        String packageName = context.getPackageName();
-        String[] permissions = {
-                android.Manifest.permission.CAMERA,
-                android.Manifest.permission.ACCESS_FINE_LOCATION,
-                android.Manifest.permission.ACCESS_COARSE_LOCATION,
-                android.Manifest.permission.READ_PHONE_STATE,
-                android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                android.Manifest.permission.READ_EXTERNAL_STORAGE
-        };
-
-        for (String perm : permissions) {
-            try {
-                dpm.setPermissionGrantState(admin, packageName, perm,
-                        DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED);
-            } catch (Exception e) {
-                // Ignore if permission doesn't exist on this API level
-            }
-        }
-
-        // 3. Configure User Restrictions
-        // Allow installing apps from unknown sources (if that was the request)
-        // Note: By default this is allowed unless DISALLOW_INSTALL_UNKNOWN_SOURCES is
-        // set to true.
-        // We strictly ensure it is NOT disallowed.
-        try {
-            dpm.clearUserRestriction(admin, UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES);
-            dpm.clearUserRestriction(admin, UserManager.DISALLOW_INSTALL_APPS);
-
-            // Optional: Prevent user from uninstalling apps (if needed)
-            // dpm.addUserRestriction(admin, UserManager.DISALLOW_UNINSTALL_APPS);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        // 4. Extract and Save Provisioning Data
+        // 1. Extract and Save Provisioning Data (FAST & SAFE)
+        // This is necessary here because the Intent Extras are only available in this
+        // callback
         try {
             PersistableBundle extras = intent.getParcelableExtra(
                     DevicePolicyManager.EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE);
@@ -98,19 +49,30 @@ public class AdminReceiver extends DeviceAdminReceiver {
 
                 editor.putBoolean("isProvisioned", true);
                 editor.apply();
+                Log.d(TAG, "Provisioning data saved successfully.");
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error saving provisioning data", e);
         }
 
-        // 5. Set Profile Name
+        // 2. Set Profile Name (SAFE)
         try {
             dpm.setProfileName(admin, "Nama EMI Device");
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error setting profile name", e);
         }
 
-        // 6. Force Launch App
+        // 3. Enable the App (SAFE pattern for Android 10+)
+        try {
+            dpm.setProfileEnabled(admin);
+        } catch (Exception e) {
+            // Ignore if API level mismatch or already enabled
+        }
+
+        // 4. Force Launch App (CRITICAL)
+        // We use ProvisioningCompleteActivity to handle heavy setup
+        // (permissions/restrictions)
+        // This unblocks the "Getting Ready" screen immediately.
         launchApp(context);
     }
 
@@ -119,9 +81,9 @@ public class AdminReceiver extends DeviceAdminReceiver {
             Intent launch = new Intent(context, ProvisioningCompleteActivity.class);
             launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(launch);
-            Toast.makeText(context, "Setup Complete. Launching...", Toast.LENGTH_LONG).show();
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Failed to launch app", e);
+            // Fallback
             try {
                 Intent fallback = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
                 if (fallback != null) {
