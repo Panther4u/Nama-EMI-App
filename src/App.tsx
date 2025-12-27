@@ -25,10 +25,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+import Entry from "./Entry";
+
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<AdminLogin />} />
+      <Route path="/" element={<Entry />} />
       <Route path="/admin" element={<AdminLogin />} />
       <Route
         path="/admin/dashboard"
