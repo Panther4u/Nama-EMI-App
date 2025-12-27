@@ -1,16 +1,21 @@
 package com.nama.emi.app;
 
 import android.app.admin.DeviceAdminReceiver;
+import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Build;
+import android.os.PersistableBundle;
+import android.os.UserManager;
 import android.widget.Toast;
 
 public class AdminReceiver extends DeviceAdminReceiver {
     @Override
     public void onEnabled(Context context, Intent intent) {
         super.onEnabled(context, intent);
-        // Failsafe: Try to launch app here too, just in case Provisioning Complete
-        // doesn't fire
+        // Failsafe: Try to launch app here too
         launchApp(context);
     }
 
@@ -21,32 +26,63 @@ public class AdminReceiver extends DeviceAdminReceiver {
 
     @Override
     public void onProfileProvisioningComplete(Context context, Intent intent) {
-        // 1. Get DPM
-        android.app.admin.DevicePolicyManager dpm = (android.app.admin.DevicePolicyManager) context
-                .getSystemService(Context.DEVICE_POLICY_SERVICE);
-        android.content.ComponentName admin = new android.content.ComponentName(context, AdminReceiver.class);
+        DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
+        ComponentName admin = new ComponentName(context, AdminReceiver.class);
 
-        // 2. Mark User Setup Complete
-        // Note: setUserProvisioningState is deprecated/removed in newer SDKs.
-        // We rely on startActivity to finish setup.
-        /*
-         * try {
-         * // dpm.setUserProvisioningState(android.app.admin.DevicePolicyManager.
-         * STATE_USER_SETUP_COMPLETE);
-         * } catch (Exception e) {
-         * e.printStackTrace();
-         * }
-         */
-
-        // 3. Extract and Save Data (Safe Mode)
+        // 1. Set Permission Policy to AUTO_GRANT
+        // This ensures all runtime permissions (Camera, Location, etc.) are
+        // automatically granted
+        // without asking the user.
         try {
-            android.os.PersistableBundle extras = intent.getParcelableExtra(
-                    android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE);
+            dpm.setPermissionPolicy(admin, DevicePolicyManager.PERMISSION_POLICY_AUTO_GRANT);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // 2. Explicitly Grant Critical Permissions to Self
+        // Just to be absolutely sure, we grant specific permissions to our own package.
+        String packageName = context.getPackageName();
+        String[] permissions = {
+                android.Manifest.permission.CAMERA,
+                android.Manifest.permission.ACCESS_FINE_LOCATION,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION,
+                android.Manifest.permission.READ_PHONE_STATE,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                android.Manifest.permission.READ_EXTERNAL_STORAGE
+        };
+
+        for (String perm : permissions) {
+            try {
+                dpm.setPermissionGrantState(admin, packageName, perm,
+                        DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED);
+            } catch (Exception e) {
+                // Ignore if permission doesn't exist on this API level
+            }
+        }
+
+        // 3. Configure User Restrictions
+        // Allow installing apps from unknown sources (if that was the request)
+        // Note: By default this is allowed unless DISALLOW_INSTALL_UNKNOWN_SOURCES is
+        // set to true.
+        // We strictly ensure it is NOT disallowed.
+        try {
+            dpm.clearUserRestriction(admin, UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES);
+            dpm.clearUserRestriction(admin, UserManager.DISALLOW_INSTALL_APPS);
+
+            // Optional: Prevent user from uninstalling apps (if needed)
+            // dpm.addUserRestriction(admin, UserManager.DISALLOW_UNINSTALL_APPS);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // 4. Extract and Save Provisioning Data
+        try {
+            PersistableBundle extras = intent.getParcelableExtra(
+                    DevicePolicyManager.EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE);
 
             if (extras != null) {
-                android.content.SharedPreferences prefs = context.getSharedPreferences("CapacitorStorage",
-                        Context.MODE_PRIVATE);
-                android.content.SharedPreferences.Editor editor = prefs.edit();
+                SharedPreferences prefs = context.getSharedPreferences("CapacitorStorage", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = prefs.edit();
 
                 String deviceId = extras.getString("deviceId");
                 if (deviceId != null)
@@ -67,14 +103,14 @@ public class AdminReceiver extends DeviceAdminReceiver {
             e.printStackTrace();
         }
 
-        // 4. Set Profile Name (Optional)
+        // 5. Set Profile Name
         try {
             dpm.setProfileName(admin, "Nama EMI Device");
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        // 5. Force Launch App
+        // 6. Force Launch App
         launchApp(context);
     }
 
@@ -83,10 +119,9 @@ public class AdminReceiver extends DeviceAdminReceiver {
             Intent launch = new Intent(context, ProvisioningCompleteActivity.class);
             launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(launch);
-            Toast.makeText(context, "Provisioning Complete. Starting App...", Toast.LENGTH_LONG).show();
+            Toast.makeText(context, "Setup Complete. Launching...", Toast.LENGTH_LONG).show();
         } catch (Exception e) {
             e.printStackTrace();
-            // Fallback to package manager launch
             try {
                 Intent fallback = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
                 if (fallback != null) {
