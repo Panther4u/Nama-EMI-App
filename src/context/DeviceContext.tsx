@@ -47,7 +47,7 @@ const generateQRData = (device: Partial<Device> & { serverIp?: string }, current
 
   return JSON.stringify({
     "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": "com.nama.emi.app/com.nama.emi.app.AdminReceiver",
-    "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_CHECKSUM": import.meta.env.VITE_ANDROID_CHECKSUM || "igldpliREkBowDh4E-d55JuZlcfYDoAo-sXqYoDKMQc",
+    "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_CHECKSUM": import.meta.env.VITE_ANDROID_CHECKSUM || "sX5T96f/62N2lXDAzq4xY9gUVeW2BjWgMn0KTWQQvY8=",
     "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION": downloadUrl,
     "android.app.extra.PROVISIONING_SKIP_ENCRYPTION": true,
     "android.app.extra.PROVISIONING_LEAVE_ALL_SYSTEM_APPS_ENABLED": true,

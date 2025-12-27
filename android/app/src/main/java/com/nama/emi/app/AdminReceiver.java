@@ -21,58 +21,76 @@ public class AdminReceiver extends DeviceAdminReceiver {
 
     @Override
     public void onProfileProvisioningComplete(Context context, Intent intent) {
+        Log.d(TAG, "onProfileProvisioningComplete called");
         DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
         ComponentName admin = new ComponentName(context, AdminReceiver.class);
 
         // 1. Extract and Save Provisioning Data (FAST & SAFE)
-        // This is necessary here because the Intent Extras are only available in this
-        // callback
         try {
             PersistableBundle extras = intent.getParcelableExtra(
                     DevicePolicyManager.EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE);
 
             if (extras != null) {
+                Log.d(TAG, "Provisioning extras found");
                 SharedPreferences prefs = context.getSharedPreferences("CapacitorStorage", Context.MODE_PRIVATE);
                 SharedPreferences.Editor editor = prefs.edit();
 
                 String deviceId = extras.getString("deviceId");
-                if (deviceId != null)
+                if (deviceId != null) {
                     editor.putString("deviceId", deviceId);
+                    Log.d(TAG, "Saved deviceId: " + deviceId);
+                }
 
                 String customerName = extras.getString("customerName");
-                if (customerName != null)
+                if (customerName != null) {
                     editor.putString("customerName", customerName);
+                    Log.d(TAG, "Saved customerName: " + customerName);
+                }
 
                 String serverUrl = extras.getString("serverUrl");
-                if (serverUrl != null)
+                if (serverUrl != null) {
                     editor.putString("custom_api_url", serverUrl);
+                    Log.d(TAG, "Saved serverUrl: " + serverUrl);
+                }
 
                 editor.putBoolean("isProvisioned", true);
                 editor.apply();
-                Log.d(TAG, "Provisioning data saved successfully.");
+                Log.d(TAG, "All provisioning data saved successfully");
+            } else {
+                Log.w(TAG, "No provisioning extras found");
             }
         } catch (Exception e) {
             Log.e(TAG, "Error saving provisioning data", e);
         }
 
-        // 2. Set Profile Name (SAFE)
+        // 2. Set Organization Name
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                dpm.setOrganizationName(admin, "Nama EMI");
+                Log.d(TAG, "Organization name set");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error setting organization name", e);
+        }
+
+        // 3. Set Profile Name
         try {
             dpm.setProfileName(admin, "Nama EMI Device");
+            Log.d(TAG, "Profile name set");
         } catch (Exception e) {
             Log.e(TAG, "Error setting profile name", e);
         }
 
-        // 3. Enable the App (SAFE pattern for Android 10+)
+        // 4. Enable the Profile
         try {
             dpm.setProfileEnabled(admin);
+            Log.d(TAG, "Profile enabled successfully");
         } catch (Exception e) {
-            // Ignore if API level mismatch or already enabled
+            Log.e(TAG, "Error enabling profile", e);
         }
 
-        // 4. Force Launch App (CRITICAL)
-        // We use ProvisioningCompleteActivity to handle heavy setup
-        // (permissions/restrictions)
-        // This unblocks the "Getting Ready" screen immediately.
+        // 5. Launch Provisioning Complete Activity
+        Log.d(TAG, "Launching ProvisioningCompleteActivity");
         launchApp(context);
     }
 
