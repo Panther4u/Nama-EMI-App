@@ -107,21 +107,20 @@ public class WipeDevicePlugin extends Plugin {
             try {
                 // Disable factory reset
                 dpm.addUserRestriction(adminComponent, android.os.UserManager.DISALLOW_FACTORY_RESET);
-
                 // Disable safe mode
                 dpm.addUserRestriction(adminComponent, android.os.UserManager.DISALLOW_SAFE_BOOT);
-
                 // Disable adding users
                 dpm.addUserRestriction(adminComponent, android.os.UserManager.DISALLOW_ADD_USER);
-
                 // Disable USB file transfer
                 dpm.addUserRestriction(adminComponent, android.os.UserManager.DISALLOW_USB_FILE_TRANSFER);
-
                 // Disable uninstalling apps
                 dpm.addUserRestriction(adminComponent, android.os.UserManager.DISALLOW_UNINSTALL_APPS);
-
                 // Disable modifying accounts
                 dpm.addUserRestriction(adminComponent, android.os.UserManager.DISALLOW_MODIFY_ACCOUNTS);
+                // Disable debugging
+                dpm.addUserRestriction(adminComponent, android.os.UserManager.DISALLOW_DEBUGGING_FEATURES);
+                // Disable external storage mounting
+                dpm.addUserRestriction(adminComponent, android.os.UserManager.DISALLOW_MOUNT_PHYSICAL_MEDIA);
 
                 // Set lock task packages (kiosk mode)
                 dpm.setLockTaskPackages(adminComponent, new String[] { context.getPackageName() });
@@ -132,6 +131,37 @@ public class WipeDevicePlugin extends Plugin {
                 call.resolve(ret);
             } catch (Exception e) {
                 call.reject("Failed to enforce restrictions: " + e.getMessage());
+            }
+        } else {
+            call.reject("App is not Device Owner");
+        }
+    }
+
+    @PluginMethod
+    public void clearDeviceRestrictions(PluginCall call) {
+        Context context = getContext();
+        DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
+        ComponentName adminComponent = new ComponentName(context, AdminReceiver.class);
+
+        if (dpm.isDeviceOwnerApp(context.getPackageName())) {
+            try {
+                dpm.clearUserRestriction(adminComponent, android.os.UserManager.DISALLOW_FACTORY_RESET);
+                dpm.clearUserRestriction(adminComponent, android.os.UserManager.DISALLOW_SAFE_BOOT);
+                dpm.clearUserRestriction(adminComponent, android.os.UserManager.DISALLOW_ADD_USER);
+                dpm.clearUserRestriction(adminComponent, android.os.UserManager.DISALLOW_USB_FILE_TRANSFER);
+                // Note: We might want to keep DISALLOW_UNINSTALL_APPS even when unlocked?
+                // For now, let's clear it to allow full user control if they paid.
+                dpm.clearUserRestriction(adminComponent, android.os.UserManager.DISALLOW_UNINSTALL_APPS);
+                dpm.clearUserRestriction(adminComponent, android.os.UserManager.DISALLOW_MODIFY_ACCOUNTS);
+                dpm.clearUserRestriction(adminComponent, android.os.UserManager.DISALLOW_DEBUGGING_FEATURES);
+                dpm.clearUserRestriction(adminComponent, android.os.UserManager.DISALLOW_MOUNT_PHYSICAL_MEDIA);
+
+                JSObject ret = new JSObject();
+                ret.put("success", true);
+                ret.put("message", "Device restrictions cleared");
+                call.resolve(ret);
+            } catch (Exception e) {
+                call.reject("Failed to clear restrictions: " + e.getMessage());
             }
         } else {
             call.reject("App is not Device Owner");

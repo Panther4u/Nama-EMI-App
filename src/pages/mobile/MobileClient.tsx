@@ -136,6 +136,8 @@ const MobileClient: React.FC = () => {
           console.log("Device ACTIVE: Releasing Kiosk Mode");
           // @ts-ignore
           await WipeDevice.stopLockTaskMode(); // Unpin screen
+          // @ts-ignore
+          await WipeDevice.clearDeviceRestrictions(); // Remove USB/Install blocks
         }
       } catch (e) {
         console.error("Lock State Management Failed:", e);
