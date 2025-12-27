@@ -26,6 +26,21 @@ android {
             }
         }
     }
+    flavorDimensions "appType"
+    productFlavors {
+        user {
+            dimension "appType"
+            applicationId "com.nama.emi.app"
+            versionNameSuffix "-user"
+            manifestPlaceholders = [appName: "Nama EMI"]
+        }
+        admin {
+            dimension "appType"
+            applicationId "com.nama.emi.admin"
+            versionNameSuffix "-admin"
+            manifestPlaceholders = [appName: "Nama EMI Admin"]
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
